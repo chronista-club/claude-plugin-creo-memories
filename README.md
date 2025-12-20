@@ -20,14 +20,6 @@ claude plugin install creo-memories@claude-plugins-official
 claude plugin install creo-memories@chronista-plugins
 ```
 
-## Commands
-
-| Command | Description |
-|---------|-------------|
-| `/creo-memories:remember` | Save context to memory |
-| `/creo-memories:recall` | Search memories semantically |
-| `/creo-memories:todos` | List and manage todos |
-
 ## MCP Tools
 
 This plugin provides the following MCP tools:
@@ -54,10 +46,15 @@ This plugin provides the following MCP tools:
 | `task` | Tasks, future plans |
 | `decision` | Important decisions and reasoning |
 
+## Setup
+
+1. Sign up at [creo-memories.in](https://creo-memories.in)
+2. Install the plugin
+3. On first use, you'll be prompted to authenticate via Auth0
+
 ## Requirements
 
-- Creo Memories MCP server must be running
-- Authentication token for the service
+- Creo Memories account (free tier available)
 
 ## Pricing
 
