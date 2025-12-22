@@ -1,12 +1,11 @@
 {
-  "description": "Creo Memories auto-recall and auto-save hooks",
   "hooks": {
     "SessionStart": [
       {
         "hooks": [
           {
-            "type": "prompt",
-            "prompt": "セッション開始。プロジェクトに関連する過去の記憶を recall_relevant で検索し、重要な決定や学びがあれば簡潔に共有してください。"
+            "type": "command",
+            "command": "echo 'セッション開始。プロジェクトに関連する過去の記憶を recall_relevant で検索し、重要な決定や学びがあれば簡潔に共有してください。'"
           }
         ]
       }
@@ -15,8 +14,8 @@
       {
         "hooks": [
           {
-            "type": "prompt",
-            "prompt": "このセッションで重要な設計決定、技術的な発見、または学びがあった場合は、Creo Memoriesへの保存を提案してください。特になければ何も言わないでください。"
+            "type": "command",
+            "command": "echo 'このセッションで重要な設計決定、技術的な発見、または学びがあった場合は、Creo Memoriesへの保存を提案してください。特になければ何も言わないでください。'"
           }
         ]
       }
@@ -26,8 +25,8 @@
         "matcher": "Write|Edit",
         "hooks": [
           {
-            "type": "prompt",
-            "prompt": "コード変更が行われました。これがアーキテクチャや設計に関わる重要な変更であれば、設計決定としてCreo Memoriesへの保存を提案してください。単純な修正であれば何も言わないでください。"
+            "type": "command",
+            "command": "echo 'コード変更が行われました。これがアーキテクチャや設計に関わる重要な変更であれば、設計決定としてCreo Memoriesへの保存を提案してください。単純な修正であれば何も言わないでください。'"
           }
         ]
       }
@@ -36,8 +35,8 @@
       {
         "hooks": [
           {
-            "type": "prompt",
-            "prompt": "ユーザーの発言に「決定」「これでいく」「この方針で」「確定」などの確定表現が含まれていれば、その決定内容をCreo Memoriesに保存することを提案してください。含まれていなければ何も言わないでください。"
+            "type": "command",
+            "command": "echo '確定表現（決定、これでいく、この方針で、確定など）が含まれていれば、その決定内容をCreo Memoriesに保存することを提案してください。'"
           }
         ]
       }
