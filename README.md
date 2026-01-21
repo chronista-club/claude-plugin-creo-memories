@@ -11,13 +11,20 @@ Claude Code plugin for persistent memory across sessions.
 
 ## Installation
 
-```bash
-# From official marketplace (coming soon)
-claude plugin install creo-memories@claude-plugins-official
+### Marketplace (Recommended)
 
-# Or from GitHub
-/plugin marketplace add chronista-club/claude-plugins
-claude plugin install creo-memories@chronista-plugins
+```bash
+# Add marketplace
+claude plugin marketplace add chronista-club/claude-plugins
+
+# Install plugin
+claude plugin install creo-memories
+```
+
+### Direct from GitHub
+
+```bash
+claude plugin install gh:chronista-club/claude-plugin-creo-memories
 ```
 
 ## MCP Tools
