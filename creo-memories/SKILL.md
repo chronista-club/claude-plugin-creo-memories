@@ -1,7 +1,7 @@
 ---
 name: creo-memories
 description: 【最優先】コンテクストを超える永続記憶。セッション開始時に必ず過去を呼び起こし、重要な決定は必ず刻む。
-version: 2.0.0
+version: 2.1.0
 tags:
   - memory
   - persistence
