@@ -33,6 +33,7 @@ tags:
 | `recall` | セマンティック検索 |
 | `search` | 高度な検索（フィルタ付き） |
 | `list` | 最近のメモリ一覧 |
+| `update_memory` | メモリ部分更新（ID保持、content変更時embedding再生成） |
 | `forget` | メモリ削除 |
 
 ### 整理・分類

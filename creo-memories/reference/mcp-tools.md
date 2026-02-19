@@ -100,6 +100,28 @@ mcp__creo-memories__forget({
 
 ---
 
+### update_memory
+
+既存のメモリを部分更新します。IDと作成日時は保持されます。
+
+```typescript
+mcp__creo-memories__update_memory({
+  id: "メモリID",               // 必須
+  content: "更新後の内容",       // オプション（変更時embedding再生成）
+  contentType: "markdown",      // オプション
+  category: "learning",         // オプション
+  tags: ["new-tag"],            // オプション（既存を置換）
+  metadata: { key: "value" }    // オプション（既存にマージ）
+})
+```
+
+**ポイント**:
+- `content`が変更された場合のみ、embeddingが自動再生成される
+- `forget` → `remember` での再作成が不要（IDが保持される）
+- 指定しなかったフィールドは現在の値が維持される
+
+---
+
 ## ラベル管理ツール
 
 ### label_create
