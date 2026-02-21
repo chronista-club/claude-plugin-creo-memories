@@ -9,11 +9,35 @@ Creo MemoriesはMCP（Model Context Protocol）経由でClaude Codeと連携し�
 
 ---
 
+## Context Engine（v3.0新機能）
+
+Context Engineはセッション開始時に自動でコンテキストを提供する仕組みです。
+
+### instructions自動注入
+
+セッション開始時、以下が自動でinstructionsに含まれます：
+- 直近2件の記憶
+- 未完了Todo（最大2件）
+
+### remember応答拡張
+
+`remember`でメモリ保存した際、contentに関連する過去の記憶が自動で応答に付加されます（最大3件、類似度0.6以上）。
+
+### MCP Resource
+
+```
+memory://context/session
+```
+
+現在のセッションコンテキストをJSON形式で取得できます。
+
+---
+
 ## メモリ操作ツール
 
 ### remember
 
-メモリを保存します。
+メモリを保存します。保存後、Context Engineが関連する過去の記憶を自動付加します。
 
 ```typescript
 mcp__creo-memories__remember({
@@ -23,42 +47,19 @@ mcp__creo-memories__remember({
   labelIds: ["label:..."],      // オプション（ラベルID配列）
   metadata: { key: "value" },   // オプション
   contentType: "markdown",      // オプション（text/markdown）
-  spaceId: "space:...",         // オプション
-  domainId: "domain:..."        // オプション
+  atlasId: "atlas:..."          // オプション
 })
 ```
-
----
-
-### recall
-
-セマンティック検索で関連メモリを取得します。
-
-```typescript
-mcp__creo-memories__recall({
-  query: "検索クエリ",          // 必須
-  limit: 10,                    // オプション（デフォルト: 10）
-  threshold: 0.7,               // オプション（デフォルト: 0.7）
-  labelIds: ["label:..."],      // オプション（ラベルフィルタ）
-  includeLabels: true,          // オプション
-  domainId: "domain:..."        // オプション
-})
-```
-
-**閾値ガイド**:
-- `0.9+`: 非常に関連性が高い
-- `0.7-0.9`: 関連性が高い（推奨）
-- `0.5-0.7`: ある程度関連
 
 ---
 
 ### search
 
-高度な検索機能でメモリを検索します。
+セマンティック検索と構造化フィルタでメモリを検索します。
 
 ```typescript
 mcp__creo-memories__search({
-  query: "検索クエリ",          // オプション
+  query: "検索クエリ",          // オプション（セマンティック検索）
   category: "design",           // オプション
   tags: ["tag1"],               // オプション
   fromDate: "2025-01-01T...",   // オプション（ISO 8601）
@@ -69,34 +70,10 @@ mcp__creo-memories__search({
 })
 ```
 
----
-
-### list
-
-最近保存されたメモリを一覧表示します。
-
-```typescript
-mcp__creo-memories__list({
-  limit: 20,                    // オプション（デフォルト: 20）
-  category: "design",           // オプション
-  verbose: false                // オプション
-})
-```
-
----
-
-### forget
-
-メモリを削除します。
-
-```typescript
-mcp__creo-memories__forget({
-  id: "メモリID",               // 必須
-  confirm: true                 // 必須（安全確認）
-})
-```
-
-**注意**: 削除は取り消せません。`confirm: true` が必須です。
+**閾値ガイド**:
+- `0.9+`: 非常に関連性が高い
+- `0.7-0.9`: 関連性が高い（推奨）
+- `0.5-0.7`: ある程度関連
 
 ---
 
@@ -122,6 +99,21 @@ mcp__creo-memories__update_memory({
 
 ---
 
+### forget
+
+メモリを削除します。
+
+```typescript
+mcp__creo-memories__forget({
+  id: "メモリID",               // 必須
+  confirm: true                 // 必須（安全確認）
+})
+```
+
+**注意**: 削除は取り消せません。`confirm: true` が必須です。
+
+---
+
 ## ラベル管理ツール
 
 ### label_create
@@ -141,6 +133,28 @@ mcp__creo-memories__label_create({
 
 ```typescript
 mcp__creo-memories__label_list()
+```
+
+### label_update
+
+ラベルを更新します。
+
+```typescript
+mcp__creo-memories__label_update({
+  id: "label:...",              // 必須
+  name: "新しい名前",           // オプション
+  color: "#00FF00"              // オプション
+})
+```
+
+### label_delete
+
+ラベルを削除します。
+
+```typescript
+mcp__creo-memories__label_delete({
+  id: "label:..."               // 必須
+})
 ```
 
 ### label_attach
@@ -165,96 +179,213 @@ mcp__creo-memories__label_detach({
 })
 ```
 
----
+### label_get_by_memory
 
-## Space管理ツール
-
-Spaceはメモリを整理するための論理的な作業単位です。
-
-### list_spaces
-
-Space一覧を取得します。
+メモリに付与されたラベル一覧を取得します。
 
 ```typescript
-mcp__creo-memories__list_spaces()
+mcp__creo-memories__label_get_by_memory({
+  memory_id: "memory:..."       // 必須
+})
 ```
 
-### create_space
+---
 
-新しいSpaceを作成します。
+## カテゴリ管理ツール
+
+### category_list
+
+カテゴリ一覧を取得します。
 
 ```typescript
-mcp__creo-memories__create_space({
+mcp__creo-memories__category_list()
+```
+
+### category_create
+
+カテゴリを作成します。
+
+```typescript
+mcp__creo-memories__category_create({
+  name: "カテゴリ名",           // 必須
+  description: "説明"           // オプション
+})
+```
+
+### category_update
+
+カテゴリを更新します。
+
+```typescript
+mcp__creo-memories__category_update({
+  id: "category:...",           // 必須
+  name: "新しい名前",           // オプション
+  description: "新しい説明"     // オプション
+})
+```
+
+### category_delete
+
+カテゴリを削除します。
+
+```typescript
+mcp__creo-memories__category_delete({
+  id: "category:..."            // 必須
+})
+```
+
+### category_attach
+
+メモリにカテゴリを付与します。
+
+```typescript
+mcp__creo-memories__category_attach({
+  memory_id: "memory:...",      // 必須
+  category_id: "category:..."   // 必須
+})
+```
+
+### category_detach
+
+メモリからカテゴリを解除します。
+
+```typescript
+mcp__creo-memories__category_detach({
+  memory_id: "memory:...",      // 必須
+  category_id: "category:..."   // 必須
+})
+```
+
+### category_get_by_memory
+
+メモリに付与されたカテゴリ一覧を取得します。
+
+```typescript
+mcp__creo-memories__category_get_by_memory({
+  memory_id: "memory:..."       // 必須
+})
+```
+
+### category_replace_for_memory
+
+メモリのカテゴリを一括置換します。
+
+```typescript
+mcp__creo-memories__category_replace_for_memory({
+  memory_id: "memory:...",      // 必須
+  category_ids: ["category:...", "category:..."]  // 必須
+})
+```
+
+---
+
+## Atlas管理ツール
+
+Atlasはメモリを整理するための階層的なツリー構造です。
+
+### create_atlas
+
+Atlasを作成します。
+
+```typescript
+mcp__creo-memories__create_atlas({
   name: "プロジェクトA",        // 必須
   description: "説明",          // オプション
+  parent_id: "atlas:...",       // オプション（子Atlasの場合）
   metadata: {}                  // オプション
 })
 ```
 
-### get_space
+### list_atlas
 
-Space詳細を取得します。
+Atlas一覧を取得します。
 
 ```typescript
-mcp__creo-memories__get_space({
-  space_id: "space:..."         // 必須
+mcp__creo-memories__list_atlas({
+  parent_id: "atlas:..."        // オプション（特定の親の子を取得）
+})
+```
+
+### get_atlas_tree
+
+Atlasのツリー構造を取得します。
+
+```typescript
+mcp__creo-memories__get_atlas_tree({
+  atlas_id: "atlas:..."         // 必須
+})
+```
+
+### update_atlas
+
+Atlasを更新します。
+
+```typescript
+mcp__creo-memories__update_atlas({
+  id: "atlas:...",              // 必須
+  name: "新しい名前",           // オプション
+  description: "新しい説明"     // オプション
+})
+```
+
+### delete_atlas
+
+Atlasを削除します。
+
+```typescript
+mcp__creo-memories__delete_atlas({
+  id: "atlas:..."               // 必須
 })
 ```
 
 ---
 
-## Domain管理ツール
+## Domain Shared Key管理ツール
 
-Domainは知識の分類領域です。
+APIキーベースの共有アクセスを管理します。
 
-### list_domains
+### create_domain_shared_key
 
-ドメイン一覧を取得します。
+共有キーを作成します。
 
 ```typescript
-mcp__creo-memories__list_domains({
-  parent_id: "domain:..."       // オプション
+mcp__creo-memories__create_domain_shared_key({
+  name: "キー名",              // 必須
+  atlas_id: "atlas:..."        // オプション
 })
 ```
 
-### create_domain
+### list_domain_shared_keys
 
-新しいドメインを作成します。
+共有キー一覧を取得します。
 
 ```typescript
-mcp__creo-memories__create_domain({
-  name: "ドメイン名",           // 必須
-  parent_id: "domain:...",      // オプション
-  metadata: {}                  // オプション
+mcp__creo-memories__list_domain_shared_keys()
+```
+
+### revoke_domain_shared_key
+
+共有キーを無効化します。
+
+```typescript
+mcp__creo-memories__revoke_domain_shared_key({
+  id: "domain_shared_key:..."   // 必須
 })
 ```
 
-### switch_domain
+### delete_domain_shared_key
 
-セッションのデフォルトドメインを切り替えます。
+共有キーを削除します。
 
 ```typescript
-mcp__creo-memories__switch_domain({
-  sessionId: "session:...",     // 必須
-  defaultDomainId: "domain:..." // 必須
+mcp__creo-memories__delete_domain_shared_key({
+  id: "domain_shared_key:..."   // 必須
 })
 ```
 
 ---
 
 ## セッション管理ツール
-
-### start_session
-
-セッションを開始します。
-
-```typescript
-mcp__creo-memories__start_session({
-  userId: "user:...",           // 必須
-  defaultSpaceId: "space:...",  // オプション
-  defaultDomainId: "domain:..." // オプション
-})
-```
 
 ### get_session
 
@@ -266,6 +397,14 @@ mcp__creo-memories__get_session({
 })
 ```
 
+### get_status
+
+サーバーステータスを取得します。
+
+```typescript
+mcp__creo-memories__get_status()
+```
+
 ### end_session
 
 セッションを終了します。
@@ -273,6 +412,52 @@ mcp__creo-memories__get_session({
 ```typescript
 mcp__creo-memories__end_session({
   sessionId: "session:..."      // 必須
+})
+```
+
+---
+
+## ユーザー管理ツール
+
+### get_user
+
+認証済みユーザーの情報を取得します。
+
+```typescript
+mcp__creo-memories__get_user()
+```
+
+### generate_api_key
+
+APIキーを生成します（一度だけ表示）。
+
+```typescript
+mcp__creo-memories__generate_api_key()
+```
+
+---
+
+## ログツール
+
+### get_logs
+
+ログを取得します。
+
+```typescript
+mcp__creo-memories__get_logs({
+  limit: 50,                    // オプション
+  level: "info"                 // オプション
+})
+```
+
+### search_logs
+
+ログを検索します。
+
+```typescript
+mcp__creo-memories__search_logs({
+  query: "検索クエリ",          // 必須
+  limit: 50                     // オプション
 })
 ```
 
@@ -306,6 +491,19 @@ mcp__creo-memories__list_todos({
 })
 ```
 
+### update_todo
+
+Todoを更新します。
+
+```typescript
+mcp__creo-memories__update_todo({
+  id: "todo:...",               // 必須
+  content: "更新後の内容",       // オプション
+  priority: "medium",           // オプション
+  status: "in_progress"         // オプション
+})
+```
+
 ### complete_todo
 
 Todoを完了としてマークします。
@@ -316,24 +514,14 @@ mcp__creo-memories__complete_todo({
 })
 ```
 
----
+### delete_todo
 
-## ユーザー管理ツール
-
-### get_user
-
-認証済みユーザーの情報を取得します。
+Todoを削除します。
 
 ```typescript
-mcp__creo-memories__get_user()
-```
-
-### generate_api_key
-
-APIキーを生成します（一度だけ表示）。
-
-```typescript
-mcp__creo-memories__generate_api_key()
+mcp__creo-memories__delete_todo({
+  id: "todo:..."                // 必須
+})
 ```
 
 ---

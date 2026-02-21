@@ -2,7 +2,28 @@
 
 ## 基本ワークフロー
 
-### 1. 議論からの知識保存
+### 1. Context Engineによる自動コンテキスト提供
+
+**シナリオ**: セッション開始時、過去の記憶が自動で提供される
+
+```
+[セッション開始]
+
+Context Engine が自動で以下を提供：
+
+📝 **直近の記憶**
+1. 認証システムをAuth0 OAuth2.0で実装決定 (2h ago)
+2. FleetFlowのデプロイパスを /opt/creo-memories に統一 (1d ago)
+
+✅ **未完Todo**
+1. APIレート制限の実装 (priority: high)
+
+→ エージェントはこのコンテキストを踏まえて会話を開始
+```
+
+---
+
+### 2. 議論からの知識保存（関連記憶の自動付加）
 
 **シナリオ**: 設計議論を行い、決定事項を記録したい
 
@@ -18,31 +39,28 @@ Claude: 承知しました。この決定をCreo Memoriesに保存しますか�
 💡 **保存提案**
 - カテゴリ: design
 - タグ: [authentication, oauth, auth0]
-- 内容:
-  # 認証システム設計決定
-
-  ## 決定事項
-  - Auth0を使用したOAuth2.0認証を採用
-
-  ## 理由
-  - マネージドサービスで運用負荷軽減
-  - ソーシャルログイン対応
+- 内容: Auth0を使用したOAuth2.0認証を採用...
 
 ユーザー: はい、保存して
 
 Claude: [remember を実行]
+
+保存完了。Context Engineが関連記憶を発見：
+🔗 **関連する過去の記憶**
+1. 「セッション管理にJWTを採用」(類似度: 0.85)
+2. 「APIキー認証の設計方針」(類似度: 0.72)
 ```
 
 ---
 
-### 2. 過去の決定を参照
+### 3. 過去の決定を参照
 
 **シナリオ**: 以前の設計決定を思い出したい
 
 ```
 ユーザー: 認証周りってどうなってたっけ？
 
-Claude: [recall を実行]
+Claude: [search を実行]
 
 過去のメモリから以下が見つかりました：
 
@@ -55,14 +73,14 @@ Claude: [recall を実行]
 
 ---
 
-### 3. プロジェクト開始時のコンテキスト読み込み
+### 4. プロジェクト開始時のコンテキスト読み込み
 
 **シナリオ**: 久しぶりにプロジェクトに戻った
 
 ```
 ユーザー: このプロジェクトの概要を教えて
 
-Claude: [search で関連情報を検索]
+Claude: [search でカテゴリ別に検索]
 
 📚 **プロジェクトメモリから取得した情報**
 
@@ -71,8 +89,8 @@ Claude: [search で関連情報を検索]
 - Cloudflare Workers AIで埋め込み生成
 
 ### 最近の決定事項
-1. plamo-embedding → Cloudflare移行
-2. FleetFlow統一でDocker直接操作禁止
+1. Context Engine導入でプロアクティブ記憶提供
+2. Atlas階層構造で知識を整理
 
 詳細を確認したい項目はありますか？
 ```
@@ -81,7 +99,7 @@ Claude: [search で関連情報を検索]
 
 ## 高度なワークフロー
 
-### 4. ラベルを使った整理
+### 5. ラベルを使った整理
 
 **シナリオ**: 重要なメモリにラベルを付けて管理
 
@@ -99,7 +117,7 @@ mcp__creo-memories__label_attach({
 })
 
 // ラベルでフィルタして検索
-mcp__creo-memories__recall({
+mcp__creo-memories__search({
   query: "設計決定",
   labelIds: ["label:..."]
 })
@@ -107,7 +125,33 @@ mcp__creo-memories__recall({
 
 ---
 
-### 5. デバッグ知識の蓄積
+### 6. Atlasで知識を階層整理
+
+**シナリオ**: プロジェクトごとにメモリを整理
+
+```typescript
+// プロジェクトAtlasを作成
+mcp__creo-memories__create_atlas({
+  name: "Creo Memories",
+  description: "Creo Memoriesプロジェクトの知識ベース"
+})
+
+// サブAtlasを作成
+mcp__creo-memories__create_atlas({
+  name: "アーキテクチャ",
+  parent_id: "atlas:...",
+  description: "設計・アーキテクチャに関する記憶"
+})
+
+// ツリー構造を確認
+mcp__creo-memories__get_atlas_tree({
+  atlas_id: "atlas:..."
+})
+```
+
+---
+
+### 7. デバッグ知識の蓄積
 
 **シナリオ**: バグを解決し、その知識を記録
 
@@ -123,13 +167,10 @@ Claude: はい、原因は環境変数の設定漏れでした。
 - タグ: [embedding, cloudflare, config-error]
 - 内容:
   # MCPサーバー起動エラー: Embedding設定
-
   ## 症状
   ConnectionError: Embedding API key が設定されていません
-
   ## 原因
   EMBEDDING_PROVIDER=cloudflare 設定時に必須の環境変数が不足
-
   ## 解決策
   以下を.envに追加:
   - CLOUDFLARE_ACCOUNT_ID
@@ -138,7 +179,7 @@ Claude: はい、原因は環境変数の設定漏れでした。
 
 ---
 
-### 6. 時系列での振り返り
+### 8. 時系列での振り返り
 
 **シナリオ**: 特定期間の決定事項を確認
 

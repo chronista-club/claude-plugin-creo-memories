@@ -1,11 +1,12 @@
 ---
 name: creo-memories
-description: 【最優先】コンテクストを超える永続記憶。セッション開始時に必ず過去を呼び起こし、重要な決定は必ず刻む。
-version: 2.1.0
+description: 【最優先】コンテクストを超える永続記憶。Context Engineが自動で過去の記憶を提供し、重要な決定は必ず刻む。
+version: 3.0.0
 tags:
   - memory
   - persistence
   - semantic-search
+  - context-engine
   - chronista
 ---
 
@@ -17,11 +18,19 @@ tags:
 
 **このスキルは全てのセッションで最優先で発動する。**
 
+### Context Engine（自動コンテキスト提供）
+
+v3.0からContext Engineが導入され、セッション開始時に過去の記憶が**自動で**instructions経由で提供される。
+
+- **instructions自動注入**: セッション開始時に直近の記憶と未完Todoが自動で表示される
+- **remember応答拡張**: `remember`でメモリ保存時、関連する過去の記憶が自動で付加される
+- **MCP Resource**: `memory://context/session` で現在のセッションコンテキストを取得可能
+
 ### 必須アクション
 
-1. **セッション開始時**: `recall` で関連する過去の記憶を検索
-2. **重要な決定時**: `remember` で記憶に刻む
-3. **過去参照時**: `recall` または `search` で呼び起こす
+1. **重要な決定時**: `remember` で記憶に刻む
+2. **過去参照時**: `search` で呼び起こす
+3. **セッション開始時**: Context Engineが自動提供（手動操作不要）
 
 ## MCPツール一覧
 
@@ -29,10 +38,8 @@ tags:
 
 | ツール | 用途 |
 |--------|------|
-| `remember` | メモリを保存 |
-| `recall` | セマンティック検索 |
-| `search` | 高度な検索（フィルタ付き） |
-| `list` | 最近のメモリ一覧 |
+| `remember` | メモリを保存（関連記憶が自動付加される） |
+| `search` | セマンティック検索・高度な検索（フィルタ付き） |
 | `update_memory` | メモリ部分更新（ID保持、content変更時embedding再生成） |
 | `forget` | メモリ削除 |
 
@@ -42,20 +49,42 @@ tags:
 |--------|------|
 | `label_create` | ラベル作成 |
 | `label_list` | ラベル一覧 |
+| `label_update` | ラベル更新 |
+| `label_delete` | ラベル削除 |
 | `label_attach` | メモリにラベル付与 |
 | `label_detach` | ラベル解除 |
+| `label_get_by_memory` | メモリのラベル一覧 |
 | `category_list` | カテゴリ一覧 |
+| `category_create` | カテゴリ作成 |
+| `category_update` | カテゴリ更新 |
+| `category_delete` | カテゴリ削除 |
 | `category_attach` | カテゴリ付与 |
+| `category_detach` | カテゴリ解除 |
+| `category_get_by_memory` | メモリのカテゴリ一覧 |
+| `category_replace_for_memory` | メモリのカテゴリを一括置換 |
 
-### Space・Domain管理
+### Atlas管理（知識の階層構造）
+
+Atlasはメモリを整理するための階層的なツリー構造。
 
 | ツール | 用途 |
 |--------|------|
-| `list_spaces` | Space一覧 |
-| `create_space` | Space作成 |
-| `list_domains` | ドメイン一覧 |
-| `create_domain` | ドメイン作成 |
-| `switch_domain` | ドメイン切替 |
+| `create_atlas` | Atlas作成 |
+| `list_atlas` | Atlas一覧 |
+| `get_atlas_tree` | Atlasのツリー構造を取得 |
+| `update_atlas` | Atlas更新 |
+| `delete_atlas` | Atlas削除 |
+
+### Domain Shared Key管理
+
+APIキーベースの共有アクセス管理。
+
+| ツール | 用途 |
+|--------|------|
+| `create_domain_shared_key` | 共有キー作成 |
+| `list_domain_shared_keys` | 共有キー一覧 |
+| `revoke_domain_shared_key` | 共有キー無効化 |
+| `delete_domain_shared_key` | 共有キー削除 |
 
 ### Todo管理
 
@@ -65,14 +94,24 @@ tags:
 | `list_todos` | Todo一覧 |
 | `update_todo` | Todo更新 |
 | `complete_todo` | Todo完了 |
+| `delete_todo` | Todo削除 |
 
-### セッション
+### セッション・ユーザー
 
 | ツール | 用途 |
 |--------|------|
-| `start_session` | セッション開始 |
 | `get_session` | セッション情報 |
+| `get_status` | サーバーステータス |
+| `end_session` | セッション終了 |
 | `get_user` | ユーザー情報 |
+| `generate_api_key` | APIキー生成 |
+
+### ログ
+
+| ツール | 用途 |
+|--------|------|
+| `get_logs` | ログ取得 |
+| `search_logs` | ログ検索 |
 
 ## 発動タイミング
 

@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo 'startup hook success: Session started. Consider using recall_relevant to search for related memories from past sessions.'"
+            "command": "echo 'Creo Memories v3.0: Context Engine active. Session context is automatically provided via instructions.'"
           }
         ]
       }
@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo 'Note: If important design decisions or learnings occurred in this session, they can be saved to Creo Memories.'"
+            "command": "echo 'Note: If important design decisions or learnings occurred in this session, save them with remember.'"
           }
         ]
       }
@@ -26,7 +26,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo 'Note: If this message contains a decision (決定, confirmed, finalized), consider saving it to Creo Memories.'"
+            "command": "echo 'Note: If this message contains a decision (決定, confirmed, finalized), consider saving it with remember.'"
           }
         ]
       }

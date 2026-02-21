@@ -51,8 +51,8 @@ claude mcp add --transport http creo-memories https://mcp.creo-memories.in
 // ユーザー情報を取得
 mcp__creo-memories__get_user()
 
-// 最近のメモリを表示
-mcp__creo-memories__list({ limit: 5 })
+// メモリを検索
+mcp__creo-memories__search({ query: "テスト", limit: 5 })
 ```
 
 ## 認証方式
@@ -72,22 +72,34 @@ mcp__creo-memories__generate_api_key()
 
 生成されたキーは安全に保管し、`Authorization: Bearer <key>` ヘッダーで使用。
 
-## SpaceとDomain
+## Atlas（知識の階層構造）
 
 ### 概念
 
-- **Space**: 作業コンテキスト（プロジェクト単位）
-- **Domain**: 知識の分類領域（技術分野、目的別）
+- **Atlas**: メモリを整理するための階層的なツリー構造。プロジェクト、トピック、サブトピック等を表現。
 
 ### 初期設定
 
 ```typescript
-// Space一覧を確認
-mcp__creo-memories__list_spaces()
+// Atlas一覧を確認
+mcp__creo-memories__list_atlas()
 
-// ドメイン一覧を確認
-mcp__creo-memories__list_domains()
+// 新しいAtlasを作成
+mcp__creo-memories__create_atlas({
+  name: "プロジェクトA",
+  description: "プロジェクトAに関する記憶"
+})
 ```
+
+## Context Engine（v3.0新機能）
+
+Context Engineにより、セッション開始時に過去の記憶が自動で提供されます：
+
+- **instructions自動注入**: 直近の記憶と未完Todoが自動表示
+- **remember応答拡張**: 保存時に関連記憶が自動付加
+- **MCP Resource**: `memory://context/session` でコンテキスト取得
+
+手動でのセッション開始操作は不要です。
 
 ## トラブルシューティング
 
