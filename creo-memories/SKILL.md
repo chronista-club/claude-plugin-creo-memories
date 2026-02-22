@@ -1,12 +1,13 @@
 ---
 name: creo-memories
-description: 【最優先】コンテクストを超える永続記憶。Context Engineが自動で過去の記憶を提供し、重要な決定は必ず刻む。
-version: 3.0.0
+description: 【最優先】コンテクストを超える永続記憶。Context Engineが自動で過去の記憶を提供し、TTL付き一時メモリで柔軟な記憶管理を実現。
+version: 3.1.0
 tags:
   - memory
   - persistence
   - semantic-search
   - context-engine
+  - ephemeral
   - chronista
 ---
 
@@ -31,6 +32,8 @@ v3.0からContext Engineが導入され、セッション開始時に過去の�
 1. **重要な決定時**: `remember` で記憶に刻む
 2. **過去参照時**: `search` で呼び起こす
 3. **セッション開始時**: Context Engineが自動提供（手動操作不要）
+4. **一時的な情報**: `remember({ ..., ttl: 3600 })` で一時メモリとして保存
+5. **価値ある一時メモリ**: `update_memory({ id, ttl: null })` で永続化（昇格）
 
 ## MCPツール一覧
 
@@ -38,9 +41,9 @@ v3.0からContext Engineが導入され、セッション開始時に過去の�
 
 | ツール | 用途 |
 |--------|------|
-| `remember` | メモリを保存（関連記憶が自動付加される） |
-| `search` | セマンティック検索・高度な検索（フィルタ付き） |
-| `update_memory` | メモリ部分更新（ID保持、content変更時embedding再生成） |
+| `remember` | メモリを保存（`ttl`指定で一時メモリ、省略で永続メモリ） |
+| `search` | セマンティック検索・高度な検索（ephemeral情報付き） |
+| `update_memory` | メモリ部分更新（`ttl: null`で昇格、`ttl: 数値`でTTL変更） |
 | `forget` | メモリ削除 |
 
 ### 整理・分類
@@ -102,7 +105,7 @@ APIキーベースの共有アクセス管理。
 |--------|------|
 | `get_session` | セッション情報 |
 | `get_status` | サーバーステータス |
-| `end_session` | セッション終了 |
+| `end_session` | セッション終了（期限切れクリーンアップ + 未昇格サマリ） |
 | `get_user` | ユーザー情報 |
 | `generate_api_key` | APIキー生成 |
 
@@ -112,6 +115,15 @@ APIキーベースの共有アクセス管理。
 |--------|------|
 | `get_logs` | ログ取得 |
 | `search_logs` | ログ検索 |
+
+## Ephemeral（一時メモリ）の使い分け
+
+| 状況 | 方法 |
+|------|------|
+| 確定した設計決定、恒久的な知見 | `remember({ content, ... })` — 永続メモリ |
+| セッション中の作業メモ、試行錯誤の記録 | `remember({ content, ttl: 3600 })` — 一時メモリ |
+| 一時メモリが後から価値を持った場合 | `update_memory({ id, ttl: null })` — 昇格 |
+| 一時メモリのTTLを延長したい場合 | `update_memory({ id, ttl: 172800 })` — TTL変更 |
 
 ## 発動タイミング
 

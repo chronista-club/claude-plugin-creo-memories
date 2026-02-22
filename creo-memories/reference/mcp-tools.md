@@ -33,6 +33,28 @@ memory://context/session
 
 ---
 
+## Ephemeral Context Layer（一時メモリ）
+
+TTL（有効期限）付きの一時メモリ機能です。「保存するか消えるか」の二択を解消し、セッション中は一時的に保持して、価値があると判断したものだけ永続化（昇格）できます。
+
+### コンセプト
+
+- **一時メモリ**: `remember` 時に `ttl` を指定すると、期限付きのメモリとして保存される
+- **永続メモリ**: `ttl` 未指定で従来通りの永続メモリ
+- **昇格（Promote）**: `update_memory({ id, ttl: null })` で一時メモリを永続化
+- **自動削除**: 期限切れの一時メモリはセッション終了時に自動クリーンアップ
+
+### Decorator Pattern
+
+Memory本体のデータモデルは変更なし。外部の `ephemeral` テーブルの存在で一時性を表現するDecorator Patternを採用しています。
+
+### 検索時の挙動
+
+- 期限切れの一時メモリは検索結果から自動除外
+- 有効な一時メモリには `Ephemeral: TTL X時間, 残り Y分` のように残り時間が表示
+
+---
+
 ## メモリ操作ツール
 
 ### remember
@@ -47,8 +69,20 @@ mcp__creo-memories__remember({
   labelIds: ["label:..."],      // オプション（ラベルID配列）
   metadata: { key: "value" },   // オプション
   contentType: "markdown",      // オプション（text/markdown）
-  atlasId: "atlas:..."          // オプション
+  atlasId: "atlas:...",         // オプション
+  ttl: 3600                     // オプション（秒、60〜2592000）
 })
+```
+
+**TTL（一時メモリ）**:
+- `ttl` 指定時: 一時メモリとして保存。期限切れ後は自動削除
+- `ttl` 未指定: 従来通り永続メモリとして保存
+- 範囲: 60秒（1分）〜 2592000秒（30日）
+- 例: `3600`（1時間）, `86400`（24時間）, `604800`（7日）
+
+**レスポンス（TTL指定時）**:
+```
+ephemeral: { ttl: 3600, expiresAt: "2026-02-22T13:00:00.000Z" }
 ```
 
 ---
@@ -75,6 +109,13 @@ mcp__creo-memories__search({
 - `0.7-0.9`: 関連性が高い（推奨）
 - `0.5-0.7`: ある程度関連
 
+**Ephemeral（一時メモリ）の表示**:
+- 期限切れの一時メモリは検索結果から自動的に除外されます
+- 有効な一時メモリの結果には以下の情報が付加されます:
+```
+Ephemeral: TTL 1時間, 残り 45分
+```
+
 ---
 
 ### update_memory
@@ -88,7 +129,8 @@ mcp__creo-memories__update_memory({
   contentType: "markdown",      // オプション
   category: "learning",         // オプション
   tags: ["new-tag"],            // オプション（既存を置換）
-  metadata: { key: "value" }    // オプション（既存にマージ）
+  metadata: { key: "value" },   // オプション（既存にマージ）
+  ttl: null                     // オプション（null | number）
 })
 ```
 
@@ -96,6 +138,21 @@ mcp__creo-memories__update_memory({
 - `content`が変更された場合のみ、embeddingが自動再生成される
 - `forget` → `remember` での再作成が不要（IDが保持される）
 - 指定しなかったフィールドは現在の値が維持される
+
+**TTL管理**:
+- `ttl: null` → 一時メモリを**永続化（昇格）**する。`promoted: true` がレスポンスに含まれる
+- `ttl: 数値` → TTLを変更/設定。既存の永続メモリに対してもTTLを後付け可能
+- `ttl` 省略 → TTLに変更なし
+
+```typescript
+// 昇格（一時 → 永続）
+update_memory({ id: "019c72e6-...", ttl: null })
+// → "メモリを永続化（昇格）しました"
+
+// TTL延長
+update_memory({ id: "019c72e6-...", ttl: 172800 })
+// → "メモリのTTLを更新しました（172800秒）"
+```
 
 ---
 
@@ -407,12 +464,28 @@ mcp__creo-memories__get_status()
 
 ### end_session
 
-セッションを終了します。
+セッションを終了します。終了時に以下を自動実行します:
+
+1. **期限切れクリーンアップ**: 期限切れの一時メモリを自動削除
+2. **未昇格サマリ**: まだ有効な一時メモリの一覧を表示（昇格の判断材料として）
 
 ```typescript
 mcp__creo-memories__end_session({
   sessionId: "session:..."      // 必須
 })
+```
+
+**レスポンス例（一時メモリがある場合）**:
+```
+✅ セッションを終了しました
+cleanedUpExpired: "2件の期限切れメモリを削除"
+
+未昇格の一時メモリが 3 件あります:
+1. ID: 019c72e6-... (残り 2時間)
+2. ID: 019c72e7-... (残り 5日)
+3. ID: 019c72e8-... (残り 30分)
+
+永続化したいものがあれば update_memory({ id, ttl: null }) で昇格できます。
 ```
 
 ---
