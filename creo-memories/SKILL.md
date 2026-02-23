@@ -1,13 +1,15 @@
 ---
 name: creo-memories
 description: 【最優先】コンテクストを超える永続記憶。Context Engineが自動で過去の記憶を提供し、TTL付き一時メモリで柔軟な記憶管理を実現。
-version: 3.1.0
+version: 3.2.0
 tags:
   - memory
   - persistence
   - semantic-search
   - context-engine
   - ephemeral
+  - collaboration
+  - provenance
   - chronista
 ---
 
@@ -116,6 +118,56 @@ APIキーベースの共有アクセス管理。
 | `get_logs` | ログ取得 |
 | `search_logs` | ログ検索 |
 
+### メモリ関係（Provenance & Relations）
+
+メモリ間の派生関係や参照関係をMermaidダイアグラムで可視化。
+
+| ツール | 用途 |
+|--------|------|
+| `get_provenance` | メモリ/Atlasの派生関係グラフ取得（Mermaid flowchart） |
+| `get_relations` | メモリ/Atlasの関係グラフ取得（typed edges: derived_from, annotates, references） |
+
+### Annotation（注釈・コメント）
+
+メモリにスレッド型の注釈を付与。Agent間の非同期コミュニケーションに活用。
+
+| ツール | 用途 |
+|--------|------|
+| `annotate` | メモリに注釈（comment/question/concern/suggestion/approval）を付与 |
+| `get_annotations` | メモリの注釈一覧を取得（スレッド構造対応） |
+| `reply_annotation` | 注釈への返信を作成 |
+
+### Shared Context（共有作業メモリ）
+
+複数Agentが読み書きできる一時的な共有メモリ空間。
+
+| ツール | 用途 |
+|--------|------|
+| `create_shared_context` | 共有コンテキスト作成（TTL指定可） |
+| `list_shared_contexts` | 参加中の共有コンテキスト一覧 |
+| `get_shared_context` | 共有コンテキスト詳細（メモリ一覧付き） |
+| `add_to_shared_context` | 共有コンテキストにメモリ追加 |
+| `join_shared_context` | 共有コンテキストに参加 |
+| `leave_shared_context` | 共有コンテキストから離脱 |
+
+### Presence（接続状態）
+
+リアルタイムのAgent接続状態管理。
+
+| ツール | 用途 |
+|--------|------|
+| `update_presence` | 自分のフォーカス・ステータスを更新 |
+| `get_presence` | 接続中のAgent一覧を取得 |
+
+### Work Log（作業ログ）
+
+Agent間のやり取りを永続化し、セッション横断でrecall可能に。
+
+| ツール | 用途 |
+|--------|------|
+| `record_work_log` | 作業ログを記録（message/question/answer/decision/progress/error/review） |
+| `search_work_logs` | 作業ログを検索（sender/receiver/project/type指定可） |
+
 ## Ephemeral（一時メモリ）の使い分け
 
 | 状況 | 方法 |
@@ -153,6 +205,7 @@ APIキーベースの共有アクセス管理。
 | `learning` | 学んだこと、ベストプラクティス |
 | `task` | タスク、将来の計画 |
 | `decision` | 重要な意思決定とその理由 |
+| `work_log` | Agent間の作業ログ（ccwire連携） |
 
 ## 保存時のベストプラクティス
 

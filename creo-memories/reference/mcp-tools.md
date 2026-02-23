@@ -599,6 +599,242 @@ mcp__creo-memories__delete_todo({
 
 ---
 
+## メモリ関係ツール（Provenance & Relations）
+
+メモリ間の派生関係・参照関係をMermaidダイアグラムで可視化します。
+
+### get_provenance
+
+メモリまたはAtlasの派生関係グラフをMermaid flowchartで取得します。
+
+```typescript
+mcp__creo-memories__get_provenance({
+  memoryId: "memories:...",       // オプション（memoryIdかatlasIdのどちらか必須）
+  atlasId: "atlas:...",           // オプション
+  depth: 3                        // オプション（探索深度、デフォルト3）
+})
+```
+
+**レスポンス**: Mermaid flowchart形式の派生関係図
+
+### get_relations
+
+メモリまたはAtlasの関係グラフをMermaid形式で取得します。typed edgesで関係の種類を区別。
+
+```typescript
+mcp__creo-memories__get_relations({
+  memoryId: "memories:...",       // オプション（memoryIdかatlasIdのどちらか必須）
+  atlasId: "atlas:...",           // オプション
+  depth: 3,                       // オプション（探索深度、デフォルト3）
+  types: ["derived_from", "annotates"]  // オプション（フィルタ）
+})
+```
+
+**関係タイプ**:
+- `derived_from`: 派生関係
+- `annotates`: 注釈関係
+- `references`: 参照関係
+
+---
+
+## Annotationツール（注釈・コメント）
+
+メモリにスレッド型の注釈を付与します。Agent間の非同期コミュニケーションに活用。
+
+### annotate
+
+メモリに注釈を付与します。注釈はメモリとして保存され、RELATIONでリンクされます。
+
+```typescript
+mcp__creo-memories__annotate({
+  targetMemoryId: "memories:...", // 必須
+  content: "注釈の内容",          // 必須
+  annotationType: "comment",     // オプション（デフォルト: comment）
+  contentType: "markdown"        // オプション（text/markdown）
+})
+```
+
+**注釈タイプ**:
+- `comment`: コメント（デフォルト）
+- `question`: 質問
+- `concern`: 懸念事項
+- `suggestion`: 提案
+- `approval`: 承認
+
+### get_annotations
+
+メモリの注釈一覧を取得します。スレッド構造対応。
+
+```typescript
+mcp__creo-memories__get_annotations({
+  memoryId: "memories:...",       // 必須
+  annotationType: "question",    // オプション（タイプでフィルタ）
+  includeReplies: true           // オプション（デフォルト: true）
+})
+```
+
+### reply_annotation
+
+既存の注釈に返信を作成します。スレッドチェーンを形成。
+
+```typescript
+mcp__creo-memories__reply_annotation({
+  annotationMemoryId: "memories:...",  // 必須（返信先の注釈メモリID）
+  content: "返信内容",                  // 必須
+  annotationType: "answer"             // オプション
+})
+```
+
+---
+
+## Shared Contextツール（共有作業メモリ）
+
+複数Agentが読み書きできる一時的な共有メモリ空間です。
+
+### create_shared_context
+
+共有コンテキストを作成します。作成者はownerとして自動参加。
+
+```typescript
+mcp__creo-memories__create_shared_context({
+  name: "設計レビュー #129",     // 必須
+  description: "Collab機能の設計議論", // オプション
+  ttlSeconds: 86400              // オプション（秒、デフォルト: なし）
+})
+```
+
+### list_shared_contexts
+
+参加中の共有コンテキスト一覧を取得します。
+
+```typescript
+mcp__creo-memories__list_shared_contexts()
+```
+
+### get_shared_context
+
+共有コンテキストの詳細をメモリ一覧付きで取得します。
+
+```typescript
+mcp__creo-memories__get_shared_context({
+  contextId: "shared_contexts:..."  // 必須
+})
+```
+
+### add_to_shared_context
+
+共有コンテキストにメモリを追加します。
+
+```typescript
+mcp__creo-memories__add_to_shared_context({
+  contextId: "shared_contexts:...", // 必須
+  memoryId: "memories:..."          // 必須
+})
+```
+
+### join_shared_context
+
+共有コンテキストに参加します。
+
+```typescript
+mcp__creo-memories__join_shared_context({
+  contextId: "shared_contexts:..."  // 必須
+})
+```
+
+### leave_shared_context
+
+共有コンテキストから離脱します。
+
+```typescript
+mcp__creo-memories__leave_shared_context({
+  contextId: "shared_contexts:..."  // 必須
+})
+```
+
+---
+
+## Presenceツール（接続状態）
+
+リアルタイムのAgent接続状態を管理します。WebSocket経由で自動broadcast。
+
+### update_presence
+
+自分のフォーカスやステータスを更新します。
+
+```typescript
+mcp__creo-memories__update_presence({
+  currentFocus: {                  // オプション
+    type: "memory",                // 必須（memory/atlas/search/idle）
+    targetId: "memories:...",      // オプション
+    description: "設計レビュー中"   // オプション
+  },
+  status: "active",                // オプション（active/idle/busy）
+  displayName: "creo-lead"         // オプション
+})
+```
+
+### get_presence
+
+接続中のAgent一覧を取得します。
+
+```typescript
+mcp__creo-memories__get_presence({
+  userId: "users:..."              // オプション（指定時はそのユーザーの接続のみ）
+})
+```
+
+---
+
+## Work Logツール（作業ログ）
+
+Agent間のやり取りを永続化し、セッション横断でrecall可能にします。
+
+### record_work_log
+
+作業ログを記録します。内部的にmemoryとして保存（category: work_log）。
+
+```typescript
+mcp__creo-memories__record_work_log({
+  content: "DB設計について質問",    // 必須
+  workLogType: "question",         // 必須
+  sender: "creo-w1",               // 必須
+  receiver: "creo-lead",           // オプション
+  threadId: "thread-123",          // オプション
+  project: "creo-memories",        // オプション
+  issueRef: "#129",                // オプション
+  sharedContextId: "shared_contexts:...",  // オプション
+  contentType: "markdown"          // オプション
+})
+```
+
+**workLogType**:
+- `message`: 一般的なメッセージ
+- `question`: 質問
+- `answer`: 回答
+- `decision`: 決定事項
+- `progress`: 進捗報告
+- `error`: エラー報告
+- `review`: レビュー
+
+### search_work_logs
+
+作業ログを検索します。メタデータフィルタ対応。
+
+```typescript
+mcp__creo-memories__search_work_logs({
+  query: "DB設計",                 // オプション（セマンティック検索）
+  sender: "creo-w1",               // オプション
+  receiver: "creo-lead",           // オプション
+  project: "creo-memories",        // オプション
+  workLogType: "question",         // オプション
+  threadId: "thread-123",          // オプション
+  limit: 20                        // オプション
+})
+```
+
+---
+
 ## カテゴリ一覧
 
 | カテゴリ | 用途 | 例 |
@@ -612,3 +848,4 @@ mcp__creo-memories__delete_todo({
 | `learning` | 学習・知見 | ベストプラクティス、TIL |
 | `task` | タスク・計画 | 将来の実装、改善案 |
 | `decision` | 意思決定 | 重要な決定と理由 |
+| `work_log` | 作業ログ | Agent間通信、進捗、Q&A |
