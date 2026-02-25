@@ -1,7 +1,7 @@
 ---
 name: creo-memories
-description: 【最優先】コンテクストを超える永続記憶。Context Engineが自動で過去の記憶を提供し、TTL付き一時メモリで柔軟な記憶管理を実現。
-version: 3.2.0
+description: 【最優先】コンテクストを超える永続記憶。Context Engineが自動で過去の記憶を提供し、チーム共有・リアクティブ購読で協調的な記憶管理を実現。
+version: 3.3.0
 tags:
   - memory
   - persistence
@@ -10,6 +10,8 @@ tags:
   - ephemeral
   - collaboration
   - provenance
+  - subscription
+  - team
   - chronista
 ---
 
@@ -149,6 +151,31 @@ APIキーベースの共有アクセス管理。
 | `add_to_shared_context` | 共有コンテキストにメモリ追加 |
 | `join_shared_context` | 共有コンテキストに参加 |
 | `leave_shared_context` | 共有コンテキストから離脱 |
+
+### Team（チーム共有）
+
+チーム単位でAtlasを共有し、メンバー間でメモリを横断検索。
+
+| ツール | 用途 |
+|--------|------|
+| `team_create` | チーム作成 |
+| `team_list` | 所属チーム一覧 |
+| `team_invite` | メンバー招待（admin/member） |
+| `team_remove` | メンバー削除 |
+| `share_atlas` | Atlasをチームに共有（read/write/admin） |
+| `unshare_atlas` | Atlas共有を解除 |
+| `list_shared_atlas` | 共有されているAtlas一覧 |
+
+### Subscription（リアクティブ購読）
+
+メモリ変更のプッシュ型通知。条件に合致した変更のみ配信。
+
+| ツール | 用途 |
+|--------|------|
+| `subscribe_memories` | 購読作成（カテゴリ/Atlas/タグでフィルタ） |
+| `unsubscribe_memories` | 購読削除 |
+| `list_subscriptions` | 購読一覧 |
+| `check_notifications` | 未読通知を取得（pull-based drain） |
 
 ### Presence（接続状態）
 

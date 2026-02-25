@@ -199,6 +199,61 @@ mcp__creo-memories__search({
 
 ---
 
+### 9. チーム共有でメモリを横断検索
+
+**シナリオ**: チームメンバーの設計メモリを全員で共有
+
+```typescript
+// チーム作成
+mcp__creo-memories__team_create({
+  name: "creo-dev",
+  ownerId: "users:makoto",
+  description: "Creo開発チーム"
+})
+
+// メンバー招待
+mcp__creo-memories__team_invite({
+  teamId: "teams:creo-dev",
+  userId: "users:alice",
+  role: "member"
+})
+
+// プロジェクトAtlasをチームに共有
+mcp__creo-memories__share_atlas({
+  atlasId: "atlas:creo-memories",
+  teamId: "teams:creo-dev",
+  permission: "read",
+  inheritChildren: true
+})
+
+// → チームメンバーがsearchすると、共有Atlas配下のメモリも結果に含まれる
+```
+
+---
+
+### 10. メモリ変更をリアクティブに購読
+
+**シナリオ**: 特定カテゴリのメモリ変更を監視
+
+```typescript
+// 設計変更の購読を作成
+mcp__creo-memories__subscribe_memories({
+  name: "設計変更の監視",
+  filter: { category: "design" },
+  events: ["memory:created", "memory:updated"]
+})
+
+// 定期的に通知を確認（drain方式）
+mcp__creo-memories__check_notifications({ limit: 20 })
+
+// 不要になったら購読を削除
+mcp__creo-memories__unsubscribe_memories({
+  subscriptionId: "subscriptions:..."
+})
+```
+
+---
+
 ## ベストプラクティス
 
 ### 保存タイミング

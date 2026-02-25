@@ -754,6 +754,166 @@ mcp__creo-memories__leave_shared_context({
 
 ---
 
+## Teamツール（チーム共有）
+
+チーム単位でAtlasノードを共有し、メンバー全員がそのAtlas配下のメモリを横断検索できます。
+
+### team_create
+
+チームを作成します。
+
+```typescript
+mcp__creo-memories__team_create({
+  name: "creo-dev",               // 必須
+  ownerId: "users:...",           // 必須（オーナーのユーザーID）
+  description: "Creo開発チーム"    // オプション
+})
+```
+
+### team_list
+
+自分が所属するチーム一覧を取得します。
+
+```typescript
+mcp__creo-memories__team_list({
+  userId: "users:..."              // オプション
+})
+```
+
+### team_invite
+
+チームにメンバーを招待します。
+
+```typescript
+mcp__creo-memories__team_invite({
+  teamId: "teams:...",             // 必須
+  userId: "users:...",             // 必須
+  role: "member"                   // オプション（admin/member、デフォルト: member）
+})
+```
+
+### team_remove
+
+チームからメンバーを削除します。
+
+```typescript
+mcp__creo-memories__team_remove({
+  teamId: "teams:...",             // 必須
+  userId: "users:..."              // 必須
+})
+```
+
+### share_atlas
+
+Atlasノードをチームに共有します。共有すると、チームメンバーがそのAtlas配下のメモリをsearch可能になります。
+
+```typescript
+mcp__creo-memories__share_atlas({
+  atlasId: "atlas:...",            // 必須
+  teamId: "teams:...",             // 必須
+  permission: "read",              // オプション（read/write/admin、デフォルト: read）
+  inheritChildren: true,           // オプション（子孫ノードも共有、デフォルト: true）
+  sharedBy: "users:..."            // オプション（共有したユーザーID）
+})
+```
+
+### unshare_atlas
+
+Atlasノードのチーム共有を解除します。
+
+```typescript
+mcp__creo-memories__unshare_atlas({
+  atlasId: "atlas:...",            // 必須
+  teamId: "teams:..."              // 必須
+})
+```
+
+### list_shared_atlas
+
+自分に共有されているAtlas一覧を取得します。
+
+```typescript
+mcp__creo-memories__list_shared_atlas({
+  userId: "users:..."              // オプション
+})
+```
+
+**レスポンス**:
+```json
+{
+  "atlas": [
+    {
+      "atlasId": "atlas:...",
+      "permission": "read",
+      "source": "team",
+      "teamId": "teams:...",
+      "teamName": "creo-dev"
+    }
+  ]
+}
+```
+
+---
+
+## Subscriptionツール（リアクティブ購読）
+
+メモリ変更のプッシュ型購読。条件に合致したメモリ変更がプッシュ通知されます。フィルタ条件はAND条件（tagsのみOR）。
+
+### subscribe_memories
+
+メモリ変更の購読を作成します。
+
+```typescript
+mcp__creo-memories__subscribe_memories({
+  name: "設計変更の監視",           // オプション（識別用）
+  filter: {                        // オプション（AND条件）
+    category: "design",            //   カテゴリフィルタ
+    atlasId: "atlas:...",          //   Atlas IDフィルタ
+    tags: ["architecture"]         //   タグフィルタ（OR条件）
+  },
+  events: [                        // オプション
+    "memory:created",
+    "memory:updated",
+    "memory:deleted"
+  ],
+  channel: "mcp"                   // オプション（websocket/mcp、デフォルト: mcp）
+})
+```
+
+**チャネル**:
+- `mcp`: pull-based。`check_notifications`で取得（デフォルト）
+- `websocket`: 即時配信（WebSocket接続時）
+
+### unsubscribe_memories
+
+購読を削除します。
+
+```typescript
+mcp__creo-memories__unsubscribe_memories({
+  subscriptionId: "subscriptions:..."  // 必須
+})
+```
+
+### list_subscriptions
+
+自分の購読一覧を取得します。
+
+```typescript
+mcp__creo-memories__list_subscriptions()
+```
+
+### check_notifications
+
+未読のメモリ通知を取得します（drain方式: 取得した通知はバッファから削除）。
+
+```typescript
+mcp__creo-memories__check_notifications({
+  limit: 50                        // オプション（デフォルト: 50）
+})
+```
+
+---
+
 ## Presenceツール（接続状態）
 
 リアルタイムのAgent接続状態を管理します。WebSocket経由で自動broadcast。
