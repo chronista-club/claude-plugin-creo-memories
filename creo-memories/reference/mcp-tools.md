@@ -468,47 +468,47 @@ mcp__creo-memories__delete_atlas({
 
 ---
 
-## Domain Shared Key管理ツール
+## Atlas Shared Key管理ツール
 
 APIキーベースの共有アクセスを管理します。
 
-### create_domain_shared_key
+### create_atlas_shared_key
 
 共有キーを作成します。
 
 ```typescript
-mcp__creo-memories__create_domain_shared_key({
+mcp__creo-memories__create_atlas_shared_key({
   name: "キー名",              // 必須
   atlas_id: "atl_xxx"          // 必須
 })
 ```
 
-### list_domain_shared_keys
+### list_atlas_shared_keys
 
 共有キー一覧を取得します。
 
 ```typescript
-mcp__creo-memories__list_domain_shared_keys({
+mcp__creo-memories__list_atlas_shared_keys({
   atlas_id: "atl_xxx"          // 必須
 })
 ```
 
-### revoke_domain_shared_key
+### revoke_atlas_shared_key
 
 共有キーを無効化します。
 
 ```typescript
-mcp__creo-memories__revoke_domain_shared_key({
+mcp__creo-memories__revoke_atlas_shared_key({
   key_id: "key_xxx"             // 必須
 })
 ```
 
-### delete_domain_shared_key
+### delete_atlas_shared_key
 
 共有キーを削除します。
 
 ```typescript
-mcp__creo-memories__delete_domain_shared_key({
+mcp__creo-memories__delete_atlas_shared_key({
   key_id: "key_xxx"             // 必須
 })
 ```

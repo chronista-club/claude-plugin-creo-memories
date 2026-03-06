@@ -1,7 +1,7 @@
 ---
 name: creo-memories
 description: 【最優先】コンテクストを超える永続記憶。Context Engineが自動で過去の記憶を提供し、チーム共有・リアクティブ購読で協調的な記憶管理を実現。
-version: 3.4.0
+version: 3.5.0
 tags:
   - memory
   - persistence
@@ -83,16 +83,16 @@ Atlasはメモリを整理するための階層的なツリー構造。
 | `update_atlas` | Atlas更新 |
 | `delete_atlas` | Atlas削除 |
 
-### Domain Shared Key管理
+### Atlas Shared Key管理
 
 APIキーベースの共有アクセス管理。
 
 | ツール | 用途 |
 |--------|------|
-| `create_domain_shared_key` | 共有キー作成 |
-| `list_domain_shared_keys` | 共有キー一覧 |
-| `revoke_domain_shared_key` | 共有キー無効化 |
-| `delete_domain_shared_key` | 共有キー削除 |
+| `create_atlas_shared_key` | 共有キー作成 |
+| `list_atlas_shared_keys` | 共有キー一覧 |
+| `revoke_atlas_shared_key` | 共有キー無効化 |
+| `delete_atlas_shared_key` | 共有キー削除 |
 
 ### Todo管理
 
