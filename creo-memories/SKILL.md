@@ -178,6 +178,13 @@ APIキーベースの共有アクセス管理。
 | `list_subscriptions` | 購読一覧 |
 | `check_notifications` | 未読通知を取得（pull-based drain） |
 
+### 分析・プロファイル
+
+| ツール | 用途 |
+|--------|------|
+| `memory_health` | メモリ健全性レポート（stale検出、ヘルススコア、改善提案） |
+| `get_profile` | Dynamic Profile（直近の活動サマリー、カテゴリ分布、頻繁参照メモリ） |
+
 ### Presence（接続状態）
 
 リアルタイムのAgent接続状態管理。
