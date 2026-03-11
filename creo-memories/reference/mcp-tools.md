@@ -56,6 +56,22 @@ memory://context/session
 
 ---
 
+## structuredContent（v0.14.0〜）
+
+全ツールが `outputSchema` + `structuredContent` に対応しています。テキスト応答に加え、構造化JSONデータが同時に返されます。
+
+### レスポンスパターン
+
+| パターン | 用途 | 構造 |
+|---------|------|------|
+| **Entity** | 単一エンティティ操作（remember, annotate等） | `{ id, ...fields }` |
+| **List** | 一覧取得（list_todos, concept_list等） | `{ count, items: [...] }` |
+| **Search** | 検索結果（search） | `{ count, memories: [{ score, ...fields }] }` |
+| **Action** | 副作用実行（forget, concept_classify等） | `{ success, message }` |
+| **Status** | システム状態（get_status, system_health等） | `{ ...fields }` |
+
+---
+
 ## Ephemeral Context Layer（一時メモリ）
 
 TTL（有効期限）付きの一時メモリ機能です。「保存するか消えるか」の二択を解消し、セッション中は一時的に保持して、価値があると判断したものだけ永続化（昇格）できます。
@@ -122,7 +138,8 @@ mcp__creo-memories__remember({
   supersedes: ["mem_xxx"],      // オプション（置き換え対象）
   extends: ["mem_xxx"],         // オプション（補足・拡張対象）
   derives: ["mem_xxx"],         // オプション（推論元メモリ）
-  visibility: "public"          // オプション（public/private、デフォルト: private）
+  visibility: "public",         // オプション（public/private、デフォルト: private）
+  status: "active"              // オプション（active/done、タスク管理用）
 })
 ```
 
@@ -138,6 +155,11 @@ mcp__creo-memories__remember({
 - `ttl` 未指定: 従来通り永続メモリとして保存
 - 範囲: 60秒（1分）〜 2592000秒（30日）
 - 例: `3600`（1時間）, `86400`（24時間）, `604800`（7日）
+
+**Status（タスク管理）**:
+- `active`: 進行中のタスクやTODO
+- `done`: 完了済み
+- 省略: 通常のメモリ（タスクではない）
 
 **Visibility（公開設定）**:
 - `private`（デフォルト）: 所有者のみアクセス可能
@@ -221,7 +243,8 @@ mcp__creo-memories__update_memory({
   metadata: { key: "value" },   // オプション（既存にマージ）
   atlasId: "atl_xxx",           // オプション（所属Atlasを変更）
   ttl: null,                    // オプション（null | number）
-  visibility: "public"          // オプション（public/private）
+  visibility: "public",         // オプション（public/private）
+  status: "done"                // オプション（active/done、タスク管理用）
 })
 ```
 
@@ -231,6 +254,7 @@ mcp__creo-memories__update_memory({
 - 指定しなかったフィールドは現在の値が維持される
 - `atlasId` でメモリの所属Atlasノードを変更可能
 - `visibility` で公開設定を変更可能（`public`で公開URL生成）
+- `status` でタスク管理用のステータスを設定可能（`active`/`done`）
 
 **TTL管理**:
 - `ttl: null` → 一時メモリを**永続化（昇格）**する。`promoted: true` がレスポンスに含まれる
