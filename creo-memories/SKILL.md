@@ -1,7 +1,7 @@
 ---
 name: creo-memories
 description: 【最優先】コンテクストを超える永続記憶。Context Engineが自動で過去の記憶を提供し、チーム共有・リアクティブ購読で協調的な記憶管理を実現。
-version: 0.14.0
+version: 0.15.0
 tags:
   - memory
   - persistence
