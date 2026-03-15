@@ -492,6 +492,73 @@ mcp__creo-memories__delete_atlas({
 
 ---
 
+## 外部サービス連携ツール
+
+メモリとLinear/GitHubのリンク管理。codeflow内でIssue↔メモリを紐付ける。
+
+### link_external
+
+メモリに外部サービスのリンクを紐付けます。
+
+```typescript
+mcp__creo-memories__link_external({
+  memory_id: "mem_xxx",           // 必須
+  url: "https://linear.app/...",  // 必須
+  service: "linear",              // 必須（linear/github）
+  external_id: "VP-1"             // オプション
+})
+```
+
+**データ保存**: metadata に `external_links` 配列 + 逆引き用 `external_{service}_id` フラットフィールドを保存。
+
+### complete_with_context
+
+メモリを完了にし、結果テキストと外部リンクを一括で記録します。
+
+```typescript
+mcp__creo-memories__complete_with_context({
+  memory_id: "mem_xxx",           // 必須
+  result: "PR#42でマージ完了",     // 必須
+  url: "https://github.com/...",  // オプション
+  service: "github",              // オプション（urlと一緒に指定）
+  external_id: "PR#42"            // オプション
+})
+```
+
+**動作**: status を `done` に更新 + content に `## 結果` セクションを追記 + 外部リンクを紐付け。
+
+### find_by_external
+
+外部サービスのIDからメモリを逆引きします。
+
+```typescript
+mcp__creo-memories__find_by_external({
+  service: "linear",              // 必須（linear/github）
+  external_id: "VP-1"             // 必須
+})
+```
+
+### project_progress
+
+プロジェクト進捗レポートを生成します。atlas/concept/category 別に active/done を集計。
+
+```typescript
+mcp__creo-memories__project_progress({
+  group_by: "atlas",              // オプション（atlas/concept/category、デフォルト: atlas）
+  include_done: false,            // オプション（完了済みも表示）
+  atlas_id: "atl_xxx"             // オプション（特定Atlasに絞り込み）
+})
+```
+
+**レスポンス**:
+- `summary`: `{ total, active, done, completionRate, limitReached }`
+- `groups`: グループ別の進捗（completionRate, activeItems）
+- `externalLinks`: 外部リンク状況
+
+**注意**: 各ステータス最大100件まで集計。`limitReached: true` の場合、実際の件数はこれより多い可能性があります。
+
+---
+
 ## セッション管理ツール
 
 ### get_session

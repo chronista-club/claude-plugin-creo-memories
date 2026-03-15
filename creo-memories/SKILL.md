@@ -1,7 +1,7 @@
 ---
 name: creo-memories
 description: 【最優先】コンテクストを超える永続記憶。Context Engineが自動で過去の記憶を提供し、チーム共有・リアクティブ購読で協調的な記憶管理を実現。
-version: 0.16.0
+version: 0.17.0
 tags:
   - memory
   - persistence
@@ -91,6 +91,17 @@ Atlasはメモリを整理するための階層的なツリー構造。
 | `update_todo` | Todo更新 |
 | `complete_todo` | Todo完了 |
 | `delete_todo` | Todo削除 |
+
+### 外部サービス連携
+
+メモリとLinear/GitHubのリンク管理。codeflow内でIssue↔メモリを紐付け。
+
+| ツール | 用途 |
+|--------|------|
+| `link_external` | メモリに外部リンク紐付け（Linear/GitHub） |
+| `complete_with_context` | 完了 + 結果追記 + 外部リンクを1発で |
+| `find_by_external` | 外部IDからメモリ逆引き |
+| `project_progress` | プロジェクト進捗レポート（atlas/concept/category 別集計、完了率、プログレスバー） |
 
 ### セッション・ユーザー
 
