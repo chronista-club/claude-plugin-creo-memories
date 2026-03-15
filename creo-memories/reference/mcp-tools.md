@@ -352,25 +352,58 @@ mcp__creo-memories__concept_delete({
 
 ### concept_classify
 
-MemoryにConceptを付与します（classified RELATIONを作成）。
+MemoryにConceptを付与します（classified RELATIONを作成）。名前指定で自動作成、一括操作に対応。
 
 ```typescript
+// ID で直接指定（従来通り）
 mcp__creo-memories__concept_classify({
   memory_id: "mem_xxx",         // 必須
-  concept_id: "con_xxx"         // 必須
+  concept_id: "con_xxx"         // concept_id/concept_name/concept_names のいずれか必須
+})
+
+// 名前で指定（存在しなければ自動作成）
+mcp__creo-memories__concept_classify({
+  memory_id: "mem_xxx",
+  concept_name: "architecture", // 名前で指定
+  kind: "label"                 // オプション（category/label/tag、デフォルト: label）
+})
+
+// 複数一括指定
+mcp__creo-memories__concept_classify({
+  memory_id: "mem_xxx",
+  concept_names: ["security", "auth", "backend"],
+  kind: "label"
 })
 ```
+
+**注意**: `concept_id`, `concept_name`, `concept_names` は排他（同時指定はエラー）。
 
 ### concept_declassify
 
-MemoryからConceptを解除します（classified RELATIONを削除）。
+MemoryからConceptを解除します（classified RELATIONを削除）。名前指定、一括操作に対応。
 
 ```typescript
+// ID で直接指定（従来通り）
 mcp__creo-memories__concept_declassify({
-  memory_id: "mem_xxx",         // 必須
-  concept_id: "con_xxx"         // 必須
+  memory_id: "mem_xxx",
+  concept_id: "con_xxx"
+})
+
+// 名前で指定
+mcp__creo-memories__concept_declassify({
+  memory_id: "mem_xxx",
+  concept_name: "old-tag",
+  kind: "label"
+})
+
+// 複数一括指定（存在しないものは静かにスキップ）
+mcp__creo-memories__concept_declassify({
+  memory_id: "mem_xxx",
+  concept_names: ["tag1", "tag2"]
 })
 ```
+
+**注意**: declassify では自動作成しません（存在しない名前はエラーまたはスキップ）。
 
 ### concept_get_by_memory
 
@@ -454,53 +487,6 @@ Atlasを削除します。
 ```typescript
 mcp__creo-memories__delete_atlas({
   id: "atl_xxx"                 // 必須
-})
-```
-
----
-
-## Atlas Shared Key管理ツール
-
-APIキーベースの共有アクセスを管理します。
-
-### create_atlas_shared_key
-
-共有キーを作成します。
-
-```typescript
-mcp__creo-memories__create_atlas_shared_key({
-  name: "キー名",              // 必須
-  atlas_id: "atl_xxx"          // 必須
-})
-```
-
-### list_atlas_shared_keys
-
-共有キー一覧を取得します。
-
-```typescript
-mcp__creo-memories__list_atlas_shared_keys({
-  atlas_id: "atl_xxx"          // 必須
-})
-```
-
-### revoke_atlas_shared_key
-
-共有キーを無効化します。
-
-```typescript
-mcp__creo-memories__revoke_atlas_shared_key({
-  key_id: "key_xxx"             // 必須
-})
-```
-
-### delete_atlas_shared_key
-
-共有キーを削除します。
-
-```typescript
-mcp__creo-memories__delete_atlas_shared_key({
-  key_id: "key_xxx"             // 必須
 })
 ```
 
@@ -631,15 +617,27 @@ mcp__creo-memories__create_todo({
 
 ### list_todos
 
-Todo一覧を取得します。
+Todo一覧を取得します。`groupBy` でグルーピング集計が可能です。
 
 ```typescript
 mcp__creo-memories__list_todos({
   status: "pending",            // オプション（pending/in_progress/completed）
   priority: "high",             // オプション
   tags: ["work"],               // オプション
-  limit: 20                     // オプション
+  limit: 20,                    // オプション
+  groupBy: "atlas"              // オプション（atlas/category/tags/concept）
 })
+```
+
+**groupBy レスポンス**:
+- 未指定: `{ count, items: [...] }`（フラットリスト）
+- 指定時: `{ groups: { "key": { total, active, done, items } } }`
+
+```typescript
+// プロジェクト別に集計
+list_todos({ groupBy: "atlas" })
+// コンセプト別に集計
+list_todos({ groupBy: "concept" })
 ```
 
 ### update_todo

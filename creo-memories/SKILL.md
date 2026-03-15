@@ -1,7 +1,7 @@
 ---
 name: creo-memories
 description: 【最優先】コンテクストを超える永続記憶。Context Engineが自動で過去の記憶を提供し、チーム共有・リアクティブ購読で協調的な記憶管理を実現。
-version: 0.15.1
+version: 0.16.0
 tags:
   - memory
   - persistence
@@ -65,8 +65,8 @@ Concept は categories / labels / tags を統合した分類システム。`clas
 | `concept_create` | Concept作成（key + name + kind 必須） |
 | `concept_update` | Concept更新（システムConceptは更新不可） |
 | `concept_delete` | Concept削除（関連メモリからも自動解除） |
-| `concept_classify` | メモリにConceptを付与 |
-| `concept_declassify` | メモリからConceptを解除 |
+| `concept_classify` | メモリにConceptを付与（名前指定・自動作成・一括対応） |
+| `concept_declassify` | メモリからConceptを解除（名前指定・一括対応） |
 | `concept_get_by_memory` | メモリのConcept一覧 |
 | `concept_replace_for_memory` | メモリのConceptを一括置換（kind指定でその種類のみ） |
 
@@ -82,23 +82,12 @@ Atlasはメモリを整理するための階層的なツリー構造。
 | `update_atlas` | Atlas更新（`visibility`で公開設定変更可） |
 | `delete_atlas` | Atlas削除 |
 
-### Atlas Shared Key管理
-
-APIキーベースの共有アクセス管理。
-
-| ツール | 用途 |
-|--------|------|
-| `create_atlas_shared_key` | 共有キー作成 |
-| `list_atlas_shared_keys` | 共有キー一覧 |
-| `revoke_atlas_shared_key` | 共有キー無効化 |
-| `delete_atlas_shared_key` | 共有キー削除 |
-
 ### Todo管理
 
 | ツール | 用途 |
 |--------|------|
 | `create_todo` | Todo作成 |
-| `list_todos` | Todo一覧 |
+| `list_todos` | Todo一覧（`groupBy` でプロジェクト別/種別/タグ別/コンセプト別に集計可） |
 | `update_todo` | Todo更新 |
 | `complete_todo` | Todo完了 |
 | `delete_todo` | Todo削除 |
