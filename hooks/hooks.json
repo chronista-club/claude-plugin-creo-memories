@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo 'Creo Memories v3.0: Context Engine active. Session context is automatically provided via instructions.\\n\\n💡 Decision Tree: 記録前に creo-memories/reference/decision-tree.md を確認 (Layer 1 local canon vs Layer 2 cloud trace の判定)。'"
+            "command": "echo 'Creo Memories v3.0: Context Engine active. Session context is automatically provided via instructions.\\n\\n💡 Decision Tree: 記録前に creo-memories/reference/decision-tree.md を確認 (Layer 1 local canon vs Layer 2 cloud trace の判定)。\\n\\n💡 Self-Improvement Loop: ecosystem 全体 review が overdue な場合は /creo-memories:improvement-loop で実行 (default biweekly、 ~75 min)。 Loop Dashboard memory で最終 run 日確認可能。'"
           }
         ]
       }
