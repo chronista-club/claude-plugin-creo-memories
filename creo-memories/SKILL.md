@@ -1,7 +1,7 @@
 ---
 name: creo-memories
 description: 【最優先】コンテクストを超える永続記憶。 2-layer architecture (local canon + cloud trace) と 4-scene mental model (/memories /atlas /views /actions) で活用駆動。 Context Engine が自動でセッション context 提供。
-version: 0.23.0
+version: 0.24.0
 tags:
   - memory
   - persistence
@@ -292,6 +292,39 @@ record_work_log({
 
 ---
 
+## 12. Templates (memory scaffold) — v0.24 NEW
+
+memory 作成時の **frontmatter + body の scaffold**。 cookbook の concrete recipe と組み合わせて使う。
+
+| Template | Layer | 用途 |
+|---|---|---|
+| [`feedback`](reference/templates/feedback.md) | 1 | ユーザー方針 / preference |
+| [`reference-card`](reference/templates/reference-card.md) | 1 | URL / ID / 設定値の参照表 |
+| [`project-canon`](reference/templates/project-canon.md) | 1 | project 固有の不変 fact |
+| [`decision-record`](reference/templates/decision-record.md) | 2 | ADR 風 architectural decision |
+| [`bug-fix`](reference/templates/bug-fix.md) | 2 | bug の root cause + 解決策 |
+| [`phase-completion`](reference/templates/phase-completion.md) | 2 | Phase / Sprint 完了 trace |
+| [`work-log`](reference/templates/work-log.md) | 2 | agent 間 comm の persist (record_work_log) |
+
+詳細: [`reference/templates/README.md`](reference/templates/README.md)
+
+---
+
+## 13. Hooks (v0.24 active activation)
+
+plugin v0.24 から hooks が **真に活動** する形に強化:
+
+| Hook | 動作 |
+|---|---|
+| `SessionStart` | Context Engine 起動 + Decision tree への navigation 案内 |
+| `Stop` | Session 終了前 checklist (remember / record_work_log / ttl 昇格 / complete_with_context) |
+| `PreToolUse(Write)` | `*/memory/*.md` への Write 検出時、 Layer 判定 prompt (Layer 2 cloud に書くべきか問い直す) |
+| `UserPromptSubmit` | decision keyword (決定 / confirmed / done / merged 等) 検出時、 remember 提案 |
+
+Hook は **強制 block ではなく nudge**。 agent が判定して進めるか変更するかを decide できる。
+
+---
+
 ## リファレンス
 
 - [Decision Tree](reference/decision-tree.md) — Layer 判定 / scene mapping
@@ -305,6 +338,7 @@ record_work_log({
 - [Cookbook: Decision Record](reference/cookbooks/decision-record.md)
 - [Cookbook: Cycle Close](reference/cookbooks/cycle-close.md)
 - [Cookbook: Onboarding](reference/cookbooks/onboarding.md)
+- [Templates](reference/templates/README.md) — memory 作成 scaffold (v0.24 NEW)
 - [API Redesign Proposal](reference/api-redesign.md) — 70 tool → 11 tool 将来構想
 - [MCP Tools (現状)](reference/mcp-tools.md) — 70 tool 詳細
 - [Setup](reference/setup.md)
