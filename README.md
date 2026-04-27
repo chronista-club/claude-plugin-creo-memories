@@ -2,6 +2,16 @@
 
 Persistent memory system for Claude Code. Remember context, decisions, and learnings across sessions with semantic search, automatic context delivery, and a 4-scene mental model.
 
+## What's New in v0.25
+
+- **Self-Improvement Loop** — ecosystem (plugin / 本体 / docs / external / skill 自身) を周期的 audit する仕組み
+  - 4 cadence: daily (5 min) / weekly (20 min) / **biweekly (75 min, primary)** / quarterly (3 h)
+  - 設計原則 (8 axiom): hierarchical / Loop Dashboard pattern / ICE prioritization / incident-triggered ad-hoc / meta-loop / convergence / counterfactual / action chain closure
+  - Slash command `/creo-memories:improvement-loop [cadence]` (manual)
+  - SessionStart hook reminder (passive nudge)
+  - Cron-schedulable (autonomous via `/loop` skill)
+  - 詳細: [creo-memories/reference/improvement-loop/](creo-memories/reference/improvement-loop/README.md)
+
 ## What's New in v0.24
 
 - **Active hooks** — passive echo hook → 真に動作する nudge hook へ:
