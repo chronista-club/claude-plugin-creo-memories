@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo 'Creo Memories v3.0: Context Engine active. Session context is automatically provided via instructions.'"
+            "command": "echo 'Creo Memories v3.0: Context Engine active. Session context is automatically provided via instructions.\\n\\n💡 Decision Tree: 記録前に creo-memories/reference/decision-tree.md を確認 (Layer 1 local canon vs Layer 2 cloud trace の判定)。'"
           }
         ]
       }
@@ -15,7 +15,18 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo 'Note: If important design decisions or learnings occurred in this session, save them with remember.'"
+            "command": "echo '💡 Session 終了前 checklist:\\n- 重要な decision / learning は mcp__creo-memories__remember で Layer 2 に保存\\n- agent 間 comm が発生したなら mcp__creo-memories__record_work_log で persist\\n- 未昇格の ttl memory に価値があれば update_memory({id, ttl: null}) で永続化\\n- 完了した PR / Issue は complete_with_context で 1 発 close'"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'input=$(cat); path=$(echo \"$input\" | jq -r \".tool_input.file_path // \\\"\\\"\"); if echo \"$path\" | grep -qE \"/memory/.*\\\\.md$\"; then echo \"💡 Layer 1 memory file detected ($path).\\n\\nPer 2-layer architecture (creo-memories/reference/decision-tree.md):\\n- Layer 1 (local file) は 不変方針 / cross-project rule / reference card のみ\\n- 動的な project trace / 出来事 / 決定 は Layer 2 (mcp__creo-memories__remember) を使う\\n\\n判定: これは不変方針? Yes → 続行 OK / No → remember を検討\"; fi'"
           }
         ]
       }
@@ -26,7 +37,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo 'Note: If this message contains a decision (決定, confirmed, finalized), consider saving it with remember.'"
+            "command": "sh -c 'input=$(cat); prompt=$(echo \"$input\" | jq -r \".prompt // \\\"\\\"\"); if echo \"$prompt\" | grep -qE \"(決定|確定|決まった|finalized|confirmed|done|完了|完成|merged|採用|approve|approved|reject|却下)\"; then echo \"💡 Decision/completion keyword detected. 該当する場合は mcp__creo-memories__remember で記録 (category: decision/task、 status: done、 link_external で Linear/GitHub と pair) を検討。 Cookbook: creo-memories/reference/cookbooks/decision-record.md\"; fi'"
           }
         ]
       }

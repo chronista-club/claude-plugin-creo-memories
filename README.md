@@ -2,6 +2,14 @@
 
 Persistent memory system for Claude Code. Remember context, decisions, and learnings across sessions with semantic search, automatic context delivery, and a 4-scene mental model.
 
+## What's New in v0.24
+
+- **Active hooks** — passive echo hook → 真に動作する nudge hook へ:
+  - `PreToolUse(Write)` で `*/memory/*.md` 検出時に Layer 判定 prompt
+  - `UserPromptSubmit` で decision keyword (決定 / confirmed / done / merged 等) 検出 → remember 提案
+  - `Stop` で session 終了前 checklist (remember / record_work_log / ttl 昇格 / complete_with_context)
+- **Memory templates** — 7 scaffold (Layer 1: feedback / reference-card / project-canon、 Layer 2: decision-record / bug-fix / phase-completion / work-log)
+
 ## What's New in v0.23
 
 - **2-layer architecture** — Local file canon (Layer 1) + Cloud trace-archive (Layer 2) の役割分担を明示
