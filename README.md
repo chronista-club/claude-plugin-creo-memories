@@ -2,6 +2,12 @@
 
 Persistent memory system for Claude Code. Remember context, decisions, and learnings across sessions with semantic search, automatic context delivery, and a 4-scene mental model.
 
+## What's New in v0.27
+
+- **jaq drop-in 自動検出** — 全 hook + script に `JQ=$(command -v jaq 2>/dev/null || command -v jq)` を inline 化。 jaq install 済なら自動で 5-10x 速い path、 未 install なら jq fallback
+- **Atlas auto-inference** — `scripts/infer-atlas.sh` で current branch (Linear-style: `mako/creo-103-...` → `creo-memories`) + cwd basename + package.json name から atlas 推定。 SessionStart hook が自動的に「💡 Suggested Atlas: ...」を提示、 mcp__creo-memories__remember 等の atlasId を埋めるヒント
+- **Weekly + Biweekly loop wrapper** — `scripts/{weekly,biweekly}-loop.sh` で metric prep + checklist scaffold 自動化。 daily-loop.sh と合わせて 3 cadence の auto-prep 完備 (quarterly のみ依然 manual)
+
 ## What's New in v0.26
 
 - **Plugin tool invocation instrumentation** — `PostToolUse` hook が `mcp__*creo-memories__*` 呼び出しを log:

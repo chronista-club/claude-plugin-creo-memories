@@ -17,6 +17,9 @@
 
 set -euo pipefail
 
+# jaq drop-in detection (Rust port of jq、 5-10x faster startup)
+JQ="${JQ:-$(command -v jaq 2>/dev/null || command -v jq)}"
+
 LOG_FILE="${CREO_INVOCATION_LOG:-$HOME/.claude/creo-memories-invocation.log}"
 
 if [ ! -f "$LOG_FILE" ]; then
