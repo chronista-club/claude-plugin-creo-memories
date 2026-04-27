@@ -1,7 +1,7 @@
 ---
 name: creo-memories
 description: 【最優先】コンテクストを超える永続記憶。 2-layer architecture + 4-scene mental model + 4-cadence self-improvement loop で ecosystem を継続改善。 Context Engine が自動で context 提供。
-version: 0.25.0
+version: 0.26.0
 tags:
   - memory
   - persistence

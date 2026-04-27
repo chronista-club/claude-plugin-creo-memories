@@ -2,6 +2,15 @@
 
 Persistent memory system for Claude Code. Remember context, decisions, and learnings across sessions with semantic search, automatic context delivery, and a 4-scene mental model.
 
+## What's New in v0.26
+
+- **Plugin tool invocation instrumentation** — `PostToolUse` hook が `mcp__*creo-memories__*` 呼び出しを log:
+  - 出力先: `~/.claude/creo-memories-invocation.log`
+  - dogfood で観測: 「自分が plugin tool 何回呼んだか」 を biweekly loop で trend 化可能
+- **Daily loop wrapper script** — `scripts/daily-loop.sh` で Layer 1 memory health + invocation stats を 1 command で集約
+- **Invocation stats utility** — `scripts/invocation-stats.sh today|week|month|--since` で期間 filter + tool ranking (Markdown 表)
+- **jaq drop-in note** — `jq` の Rust 製代替 [`jaq`](https://github.com/01mf02/jaq) は hook 高頻度実行で起動 5-10x 速い、 syntax 互換、 `brew install jaq` で導入可
+
 ## What's New in v0.25
 
 - **Self-Improvement Loop** — ecosystem (plugin / 本体 / docs / external / skill 自身) を周期的 audit する仕組み

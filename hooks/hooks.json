@@ -31,7 +31,16 @@
         ]
       }
     ],
-    "PostToolUse": [],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'input=$(cat); tool=$(echo \"$input\" | jq -r \".tool_name // \\\"\\\"\"); if echo \"$tool\" | grep -qE \"^mcp__(claude_ai_creo-memories|creo-memories|plugin_creo-memories_creo-memories)__\"; then mkdir -p ~/.claude && echo \"$(date -u +%Y-%m-%dT%H:%M:%SZ) $tool\" >> ~/.claude/creo-memories-invocation.log; fi'"
+          }
+        ]
+      }
+    ],
     "UserPromptSubmit": [
       {
         "hooks": [
