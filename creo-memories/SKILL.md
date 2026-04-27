@@ -1,21 +1,18 @@
 ---
 name: creo-memories
-description: 【最優先】コンテクストを超える永続記憶。Context Engineが自動で過去の記憶を提供し、チーム共有・リアクティブ購読で協調的な記憶管理を実現。
-version: 0.21.0
+description: 【最優先】コンテクストを超える永続記憶。 2-layer architecture (local canon + cloud trace) と 4-scene mental model (/memories /atlas /views /actions) で活用駆動。 Context Engine が自動でセッション context 提供。
+version: 0.23.0
 tags:
   - memory
   - persistence
   - semantic-search
   - context-engine
-  - ephemeral
-  - collaboration
-  - provenance
-  - subscription
-  - team
+  - 2-layer
+  - 4-scene
   - chronista
 ---
 
-# Creo Memories - クロニスタの記憶
+# Creo Memories — クロニスタの記憶
 
 > **過去を知る者だけが、未来を正しく紡げる。**
 
@@ -23,250 +20,241 @@ tags:
 
 **このスキルは全てのセッションで最優先で発動する。**
 
-### Context Engine（自動コンテキスト提供）
+何かを記録 / 想起 / 関連付け / 状態変更したい時、 まず本 skill を読む。 file 直書き (Write tool) より plugin tool を default に。
 
-v3.0からContext Engineが導入され、セッション開始時に過去の記憶が**自動で**instructions経由で提供される。
+---
 
-- **instructions自動注入**: セッション開始時に直近の記憶と未完Todoが自動で表示される
-- **remember応答拡張**: `remember`でメモリ保存時、関連する過去の記憶が自動で付加される
-- **MCP Resource**: `memory://context/session` で現在のセッションコンテキストを取得可能
+## 0. Decision Tree (まずこれを判定する)
 
-### 必須アクション
+memory に書きたい / 読みたい / 動かしたい時、 **必ずこの順で判定する**。
 
-1. **重要な決定時**: `remember` で記憶に刻む
-2. **過去参照時**: `search` で呼び起こす
-3. **セッション開始時**: Context Engineが自動提供（手動操作不要）
-4. **一時的な情報**: `remember({ ..., ttl: 3600 })` で一時メモリとして保存
-5. **価値ある一時メモリ**: `update_memory({ id, ttl: null })` で永続化（昇格）
-6. **メモリ更新時**: `remember({ ..., supersedes: ["mem_xxx"] })` で古いメモリを置き換え（Pre-save Detection が自動提案）
+### Q1: これは「自分 / プロジェクトが常に従う方針」か?
 
-## structuredContent対応（v0.14.0〜）
+- **Yes** → **Layer 1 (local file)** に書く: `~/.claude/projects/<project>/memory/*.md` + MEMORY.md index
+- **No** → Q2 へ
 
-全ツールが `outputSchema` + `structuredContent` に対応。テキスト応答に加え、構造化JSONデータが同時に返されます。5つのレスポンスパターン: Entity, List, Search, Action, Status。
+### Q2: これは「ある時点で起こった事実 / 決定 / 現状」か?
 
-## MCPツール一覧
+- **Yes** → **Layer 2 (cloud)** に書く: `mcp__creo-memories__remember` で plugin 経由
+- **No** → 書かなくて OK か reconsider
 
-### メモリ操作（コア）
+### Q3 (補助): multi-agent / multi-session で参照されるか?
 
-| ツール | 用途 |
-|--------|------|
-| `remember` | メモリを保存（`ttl`で一時メモリ、`supersedes`で置換、`extends`で補足、`derives`で推論元記録、`visibility`で公開設定、`conceptIds`でConcept付与、`status`でタスク管理、Pre-save Detection付き） |
-| `search` | セマンティック検索・高度な検索（`scope`: project/personal/all で検索範囲指定、ephemeral情報付き） |
-| `update_memory` | メモリ部分更新（`ttl: null`で昇格、`ttl: 数値`でTTL変更、`atlasId`で再配置、`visibility`で公開設定変更、`status`でタスク状態変更、楽観的ロック `expectedVersion` 対応） |
-| `forget` | メモリ削除 |
+- **Yes** → 必ず Layer 2
+- **Solo** → Layer 1 で OK
 
-### 整理・分類（Concept）
+### 迷ったら
 
-Concept は categories / labels / tags を統合した分類システム。`classified` RELATION でメモリと関連付ける。
+**Layer 2 (cloud) を default**。 Layer 1 は厳しめに gate (MEMORY.md 全 session auto-load されるので noise 厳禁)。
 
-| ツール | 用途 |
-|--------|------|
-| `concept_list` | Concept一覧（kind で category/label/tag を絞り込み可） |
-| `concept_create` | Concept作成（key + name + kind 必須） |
-| `concept_update` | Concept更新（システムConceptは更新不可） |
-| `concept_delete` | Concept削除（関連メモリからも自動解除） |
-| `concept_classify` | メモリにConceptを付与（名前指定・自動作成・一括対応） |
-| `concept_declassify` | メモリからConceptを解除（名前指定・一括対応） |
-| `concept_get_by_memory` | メモリのConcept一覧 |
-| `concept_replace_for_memory` | メモリのConceptを一括置換（kind指定でその種類のみ） |
+詳細 + 例題: [`reference/decision-tree.md`](reference/decision-tree.md)
 
-### Atlas管理（知識の階層構造）
+---
 
-Atlasはメモリを整理するための階層的なツリー構造。
+## 1. 2-Layer Architecture
 
-| ツール | 用途 |
-|--------|------|
-| `create_atlas` | Atlas作成 |
-| `list_atlas` | Atlas一覧 |
-| `get_atlas_tree` | Atlasのツリー構造を取得（atlas_id省略時は全ルートのフォレストを返す） |
-| `update_atlas` | Atlas更新（`visibility`で公開設定変更可） |
-| `delete_atlas` | Atlas削除 |
-| `invite_to_atlas` | Atlasにメンバーを招待（メールアドレス指定、Accept/Declineメッセージ通知） |
+| Layer | 場所 | 役割 |
+|---|---|---|
+| **Layer 1 — Local Canon** | `~/.claude/projects/<project>/memory/*.md` | 不変方針 / cross-project rule / reference card。 緩慢に変化、 solo-authored、 MEMORY.md index |
+| **Layer 2 — Cloud Trace** | `mcp.creo-memories.in` (`mcp__creo-memories__*`) | 動的 project state / 出来事 trace / multi-agent collaboration。 速く変化、 共有、 semantic search、 Atlas / Concept |
 
-### Process（メモリのストーリー化）
+両 layer は閉じておらず cross-link 可能。 詳細は plugin README の「2-layer architecture」 section 参照。
 
-メモリ間のエッジチェーンを Process として束ね、技術的決定の経緯やデバッグ追跡パスを1つのフローとして可視化。
+---
 
-| ツール | 用途 |
-|--------|------|
-| `create_process` | メモリの連鎖を Process（ストーリー）として作成 |
-| `get_process` | Process の全ステップ取得（メモリ内容含む） |
-| `detect_processes` | メモリ間のエッジチェーンから Process 候補を自動検出（3件以上の連結チェーン） |
+## 2. 4-Scene Mental Model
 
-### Compass & Story（LLM 自動生成）
+Layer 2 (cloud) operation は **4 scene** に分かれる。 「今は memory の何をする?」の問いに 4 つの答え:
 
-Atlas のメモリから LLM（Claude Haiku）でドキュメントを自動生成。
+| Scene | 役割 | 主 tool |
+|---|---|---|
+| **`/memories`** | data layer (memory 個体 CRUD + 周辺関係) | `remember` / `search` / `update_memory` / `forget` / `annotate` / `get_provenance` / `get_relations` |
+| **`/atlas`** | structure layer (memory の整理 / 分類 / 共有) | `*_atlas` / `concept_*` / `share_atlas` / `invite_to_atlas` |
+| **`/views`** | perspective layer (collection を別角度で表示) | `generate_compass` / `generate_story` / `create_process` / `memory_health` / `get_profile` / `project_progress` |
+| **`/actions`** | motion layer (memory を動かす / 反応する) | `create_todo` / `link_external` / `subscribe_memories` / `record_work_log` / `update_presence` / `complete_with_context` / `end_session` |
 
-| ツール | 用途 |
-|--------|------|
-| `generate_compass` | Atlas 全体の Compass（羅針盤）を自動生成 — Concept 別グルーピング + 全体概要 |
-| `generate_story` | Atlas 内の特定 Concept（または全体）のストーリーを生成 |
+各 scene の playbook:
+- [`reference/scenes/memories.md`](reference/scenes/memories.md)
+- [`reference/scenes/atlas.md`](reference/scenes/atlas.md)
+- [`reference/scenes/views.md`](reference/scenes/views.md)
+- [`reference/scenes/actions.md`](reference/scenes/actions.md)
 
-### Todo管理
+---
 
-| ツール | 用途 |
-|--------|------|
-| `create_todo` | Todo作成 |
-| `list_todos` | Todo一覧（`groupBy` でプロジェクト別/種別/タグ別/コンセプト別に集計可） |
-| `update_todo` | Todo更新 |
-| `complete_todo` | Todo完了 |
-| `delete_todo` | Todo削除 |
+## 3. Trigger Patterns (自動発動条件)
 
-### 外部サービス連携
+以下の trigger を検知したら **必ず** 該当 tool を呼ぶ。
 
-メモリとLinear/GitHubのリンク管理。codeflow内でIssue↔メモリを紐付け。
+### 保存 trigger (→ Layer 2 cloud `remember`)
 
-| ツール | 用途 |
-|--------|------|
-| `link_external` | メモリに外部リンク紐付け（Linear/GitHub） |
-| `complete_with_context` | 完了 + 結果追記 + 外部リンクを1発で |
-| `find_by_external` | 外部IDからメモリ逆引き |
-| `project_progress` | プロジェクト進捗レポート（atlas/concept/category 別集計、完了率、プログレスバー） |
+- 「これで決定」「この方針で」「確定」 等の確定表現 → `remember(category:'decision', status:'done')`
+- bug の根本原因 + 解決策が判明 → `remember(category:'debug')`
+- 新しい技術選定 / library 選択 → `remember(category:'design')`
+- ADR 級の architectural choice → cookbook `decision-record.md` 参照
+- Phase / Sprint 完了 → cookbook `phase-completion.md` 参照
+- 一時的な作業 memo → `remember(ttl:3600)`
 
-### セッション・ユーザー
+### 検索 trigger (→ Layer 2 cloud `search`)
 
-| ツール | 用途 |
-|--------|------|
-| `get_session` | セッション情報 |
-| `get_status` | サーバーステータス |
-| `end_session` | セッション終了（期限切れクリーンアップ + 未昇格サマリ） |
-| `get_user` | ユーザー情報 |
-| `generate_api_key` | APIキー生成 |
+- 「前に話した」「以前決めた」「以前の」 等の過去参照
+- 「どうだったっけ」「何だったか」 等の想起表現
+- project 背景 / 経緯への質問
+- branch name から推定される Linear issue 情報
 
-### ログ・診断
+### Linear-Memory pair trigger (→ `link_external` mandate)
 
-| ツール | 用途 |
-|--------|------|
-| `diagnose` | エラー診断（サービス別エラー頻度・詳細表示） |
-| `search_logs` | ログ検索 |
-| `system_health` | LogSink健全性・エラー統計表示 |
+- PR を作成 / merge した → memory + Linear ticket を `link_external` で必ず pair
+- Linear で issue を作成した → 対応する memory を `remember` + `link_external`
 
-### メモリ関係（Provenance & Relations）
+### Work Log trigger (→ `record_work_log` mandate)
 
-メモリ間の派生関係や参照関係をMermaidダイアグラムで可視化。
+- vp msg / wire / SendMessage で agent 間 comm した → `record_work_log(type:'message')`
+- decision を確定した → `record_work_log(type:'decision')`
+- review feedback を受けた → `record_work_log(type:'review')`
 
-| ツール | 用途 |
-|--------|------|
-| `get_provenance` | メモリ/Atlasの派生関係グラフ取得（Mermaid flowchart） |
-| `get_relations` | メモリ/Atlasの関係グラフ取得（typed edges: derived_from, annotates, references, supersedes, extends, derives） |
+### Cycle close trigger (→ `/views` scene の compass / process)
 
-### Annotation（注釈・コメント）
+- Linear cycle close / weekly retrospective → cookbook `cycle-close.md` 参照
+- Phase 切替 → 同上 + `cookbook/phase-completion.md`
 
-メモリにスレッド型の注釈を付与。Agent間の非同期コミュニケーションに活用。
+---
 
-| ツール | 用途 |
-|--------|------|
-| `annotate` | メモリに注釈（comment/question/concern/suggestion/approval）を付与 |
-| `get_annotations` | メモリの注釈一覧を取得（スレッド構造対応） |
-| `reply_annotation` | 注釈への返信を作成 |
+## 4. Anti-Patterns (やらない)
 
-### Shared Context（共有作業メモリ）
+- ❌ Plugin tool を skip して Write tool で local file 直書き (Layer 判定無し)
+- ❌ Memory を rewrite で破壊的に上書き (supersedes / annotate を使う)
+- ❌ Linear と Memory に同じ内容を別々書く (`link_external` で pair)
+- ❌ status field を `active` のまま放置
+- ❌ Atlas を作らず flat に貯める
+- ❌ Concept を作らず tag string で済ませる
+- ❌ inter-agent comm を `record_work_log` に残さず流す
+- ❌ session start で前 session memory を確認しない
+- ❌ 「あった方が良い」 を memory にする (signal 薄まる)
 
-複数Agentが読み書きできる一時的な共有メモリ空間。
+詳細: [`reference/anti-patterns.md`](reference/anti-patterns.md)
 
-| ツール | 用途 |
-|--------|------|
-| `create_shared_context` | 共有コンテキスト作成（TTL指定可） |
-| `list_shared_contexts` | 参加中の共有コンテキスト一覧 |
-| `get_shared_context` | 共有コンテキスト詳細（メモリ一覧付き） |
-| `add_to_shared_context` | 共有コンテキストにメモリ追加 |
-| `join_shared_context` | 共有コンテキストに参加 |
-| `leave_shared_context` | 共有コンテキストから離脱 |
+---
 
-### Team（チーム共有）
+## 5. Cookbook (具体的 recipe)
 
-チーム単位でAtlasを共有し、メンバー間でメモリを横断検索。
+| 状況 | cookbook |
+|---|---|
+| Phase / Sprint 完了 | [`reference/cookbooks/phase-completion.md`](reference/cookbooks/phase-completion.md) |
+| Bug fix の知見保存 | [`reference/cookbooks/bug-fix.md`](reference/cookbooks/bug-fix.md) |
+| Architectural Decision Record | [`reference/cookbooks/decision-record.md`](reference/cookbooks/decision-record.md) |
+| Cycle / Sprint close | [`reference/cookbooks/cycle-close.md`](reference/cookbooks/cycle-close.md) |
+| Onboarding (新 project / session resume) | [`reference/cookbooks/onboarding.md`](reference/cookbooks/onboarding.md) |
 
-| ツール | 用途 |
-|--------|------|
-| `team_create` | チーム作成 |
-| `team_list` | 所属チーム一覧 |
-| `team_invite` | メンバー招待（admin/member） |
-| `team_remove` | メンバー削除 |
-| `share_atlas` | Atlasをチームに共有（read/write/admin） |
-| `unshare_atlas` | Atlas共有を解除 |
-| `list_shared_atlas` | 共有されているAtlas一覧 |
+---
 
-### Subscription（リアクティブ購読）
+## 6. Stage Transition Recipes (序破離)
 
-メモリ変更のプッシュ型通知。条件に合致した変更のみ配信。
+memory の lifecycle = **序 (Jo) / 破 (Ha) / 離 (Ri)**:
 
-| ツール | 用途 |
-|--------|------|
-| `subscribe_memories` | 購読作成（カテゴリ/Atlas/タグでフィルタ） |
-| `unsubscribe_memories` | 購読削除 |
-| `list_subscriptions` | 購読一覧 |
-| `check_notifications` | 未読通知を取得（pull-based drain） |
+| stage | 意味 | 操作 |
+|---|---|---|
+| **序 (Jo)** | 立ち上げ / 命題 | `remember` で新規作成 |
+| **破 (Ha)** | 訂正 / supersede / 議論 | `remember(supersedes:[...])` で旧版を破に / `annotate` で議論 thread / `update_memory` で軽微訂正 |
+| **離 (Ri)** | 卒業 / 不要化 | `update_memory(status:'cancelled')` で archive / `forget` で物理削除 |
 
-### 分析・プロファイル
+詳細: [`memory-stage-contract.md`](Layer 1 の memory) — local canon に foundational principle として記載。
 
-| ツール | 用途 |
-|--------|------|
-| `memory_health` | メモリ健全性レポート（stale検出、ヘルススコア、改善提案） |
-| `get_profile` | Dynamic Profile（直近の活動サマリー、カテゴリ分布、頻繁参照メモリ） |
+### Stage 別 patterns
 
-### Presence（接続状態）
+**新 memory を作る (序)**:
+```
+remember({ content, category, atlasId, conceptIds, status })
+```
 
-リアルタイムのAgent接続状態管理。
+**旧 memory を supersede する (破)**:
+```
+remember({ content, supersedes: ['mem_old'] })
+// old は破 stage に、 新は序 stage で開始
+```
 
-| ツール | 用途 |
-|--------|------|
-| `update_presence` | 自分のフォーカス・ステータスを更新 |
-| `get_presence` | 接続中のAgent一覧を取得 |
+**議論を残す (破 sub)**:
+```
+annotate({ memoryId, kind:'concern', content })
+```
 
-### Work Log（作業ログ）
+**memory を archive する (離 soft)**:
+```
+update_memory({ id, status:'cancelled' })
+```
 
-Agent間のやり取りを永続化し、セッション横断でrecall可能に。
+**memory を完全削除する (離 hard)**:
+```
+forget({ id })
+```
 
-| ツール | 用途 |
-|--------|------|
-| `record_work_log` | 作業ログを記録（message/question/answer/decision/progress/error/review） |
-| `search_work_logs` | 作業ログを検索（sender/receiver/project/type指定可） |
+---
 
-## Ephemeral（一時メモリ）・Supersession の使い分け
+## 7. Linear-Memory Pair Pattern (mandate)
+
+project 系 memory (category: task / design / debug) は **必ず Linear issue と pair** する:
+
+```
+1. Memory 作成: remember({ ..., category:'task', status:'in-progress' })
+2. Pair link: link_external({
+     memoryId,
+     externalSystem:'linear',
+     externalId:'CREO-XXX',
+     externalUrl:'https://linear.app/.../CREO-XXX'
+   })
+3. PR がある場合 GitHub も:
+   link_external({ memoryId, externalSystem:'github', externalId:'PR-XXX', externalUrl })
+4. 完了時: complete_with_context({ memoryId, resultSummary, externalUrl })
+```
+
+dual bookkeeping を avoid。
+
+---
+
+## 8. Work Log Mandate
+
+agent 間 comm (vp msg / wire / SendMessage / chat 横断) 時、 **必ず** `record_work_log`:
+
+```
+record_work_log({
+  type: 'message' | 'question' | 'answer' | 'decision' | 'progress' | 'error' | 'review',
+  sender: 'mako@creo-memories',
+  receiver: 'mito@chronista-hub',
+  content,
+  projectId,
+  relatedMemoryId?
+})
+```
+
+**decision 確定時** は必ず `type:'decision'` を使う。 後で `search_work_logs` で再生可能。
+
+---
+
+## 9. Ephemeral / Supersession 使い分け
 
 | 状況 | 方法 |
-|------|------|
-| 確定した設計決定、恒久的な知見 | `remember({ content, ... })` — 永続メモリ |
-| セッション中の作業メモ、試行錯誤の記録 | `remember({ content, ttl: 3600 })` — 一時メモリ |
-| 一時メモリが後から価値を持った場合 | `update_memory({ id, ttl: null })` — 昇格 |
-| 一時メモリのTTLを延長したい場合 | `update_memory({ id, ttl: 172800 })` — TTL変更 |
-| 既存メモリの内容を更新・上書きしたい | `remember({ content, supersedes: ["mem_xxx"] })` — 置き換え |
-| 類似メモリの検出をスキップしたい | `remember({ content, supersedes: [] })` — 新規保存 |
-| メモリを公開URLで共有したい | `remember({ content, visibility: "public" })` — 公開メモリ |
-| 既存メモリの公開設定を変更 | `update_memory({ id, visibility: "public" })` — 公開に変更 |
+|---|---|
+| 確定した設計決定 / 恒久的知見 | `remember({ content })` — 永続 |
+| session 中の作業 memo / 試行錯誤 | `remember({ content, ttl:3600 })` — 一時 |
+| 一時 memory が後で価値を持った | `update_memory({ id, ttl:null })` — 昇格 |
+| TTL 延長 | `update_memory({ id, ttl:172800 })` |
+| 既存 memory の内容置換 | `remember({ content, supersedes:['mem_xxx'] })` |
+| 類似 memory 検出 skip | `remember({ content, supersedes:[] })` |
+| 公開 URL 共有 | `remember({ content, visibility:'public' })` |
+| 既存 memory の公開設定変更 | `update_memory({ id, visibility:'public' })` |
 
-## 発動タイミング
+---
 
-### 自動発動: 保存提案
+## 10. MCP Tool Inventory (現状 + 将来 redesign)
 
-- 重要な設計決定が行われた
-- 「これで決定」「この方針で」などの確定表現
-- バグの根本原因と解決策が判明した
-- 新しい技術選定・ライブラリ選択
+現状 plugin は **70 tool** 提供 (詳細 `reference/mcp-tools.md`)。
 
-### 自動発動: 検索
+各 scene の主要 tool は本 skill `2. 4-Scene Mental Model` 参照。
 
-- 「前に話した」「以前決めた」などの過去参照
-- 「どうだったっけ」「何だったか」などの想起表現
-- プロジェクトの背景・経緯への質問
+**将来 (v0.24+)**: 6 core verbs + 5 named conveniences = **11 tools** にリデザイン提案中。 詳細 [`reference/api-redesign.md`](reference/api-redesign.md)。
 
-## カテゴリ分類
+---
 
-| カテゴリ | 用途 |
-|---------|------|
-| `prd` | プロダクト要件定義 |
-| `spec` | 機能仕様・要件 |
-| `design` | アーキテクチャ、設計決定 |
-| `config` | 設定、環境構築 |
-| `infra` | インフラ（DNS, VPS, Docker等） |
-| `debug` | バグ原因、解決策 |
-| `learning` | 学んだこと、ベストプラクティス |
-| `task` | タスク、将来の計画 |
-| `decision` | 重要な意思決定とその理由 |
-| `work_log` | Agent間の作業ログ（ccwire連携） |
-
-## 保存時のベストプラクティス
+## 11. Best Practices
 
 ### 内容の構造化
 
@@ -284,17 +272,40 @@ Agent間のやり取りを永続化し、セッション横断でrecall可能に
 
 ## 影響
 どこに影響するか
+
+## 関連
+- 関連 memory: ...
+- Linear / GitHub: ...
 ```
 
-### タグ付け
+### Concept 付与
 
-- 技術名: `typescript`, `rust`, `surrealdb`
-- 概念: `authentication`, `caching`, `performance`
-- プロジェクト: `creo-memories`, `fleetflow`
+- **kind:'category'**: `design` / `debug` / `task` / `decision` / `learning` 等の大分類
+- **kind:'label'**: `priority:high` / `cycle:2026-W17` 等の attribute
+- **kind:'tag'**: 技術名 (`auth0`, `surrealdb`) / 概念 (`caching`, `performance`)
+
+### Atlas 構造
+
+- project 単位で root Atlas
+- domain 単位で sub-Atlas (例: `creo-memories/design`, `creo-memories/infra`)
+- team 共有は `share_atlas`、 sub atlas に inheritChildren:true
+
+---
 
 ## リファレンス
 
-詳細は以下を参照：
-- [MCPツール詳細](reference/mcp-tools.md)
-- [セットアップガイド](reference/setup.md)
-- [ワークフロー例](reference/workflows.md)
+- [Decision Tree](reference/decision-tree.md) — Layer 判定 / scene mapping
+- [Anti-Patterns](reference/anti-patterns.md) — 10 個のやらないこと
+- [/memories scene](reference/scenes/memories.md) — data layer playbook
+- [/atlas scene](reference/scenes/atlas.md) — structure layer playbook
+- [/views scene](reference/scenes/views.md) — perspective layer playbook
+- [/actions scene](reference/scenes/actions.md) — motion layer playbook
+- [Cookbook: Phase 完了](reference/cookbooks/phase-completion.md)
+- [Cookbook: Bug Fix](reference/cookbooks/bug-fix.md)
+- [Cookbook: Decision Record](reference/cookbooks/decision-record.md)
+- [Cookbook: Cycle Close](reference/cookbooks/cycle-close.md)
+- [Cookbook: Onboarding](reference/cookbooks/onboarding.md)
+- [API Redesign Proposal](reference/api-redesign.md) — 70 tool → 11 tool 将来構想
+- [MCP Tools (現状)](reference/mcp-tools.md) — 70 tool 詳細
+- [Setup](reference/setup.md)
+- [Workflows (legacy examples)](reference/workflows.md)
