@@ -22,6 +22,10 @@
 
 set -euo pipefail
 
+# jaq drop-in detection (Rust port of jq、 5-10x faster startup)
+JQ="${JQ:-$(command -v jaq 2>/dev/null || command -v jq)}"
+export JQ  # 内包 invocation-stats.sh も継承
+
 PROJECT="${1:-${CREO_PROJECT:-$(basename "$(pwd)")}}"
 MEMORY_DIR="$HOME/.claude/projects/-Users-${USER}-repos-${PROJECT}/memory"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
