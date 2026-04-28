@@ -1,7 +1,7 @@
 ---
 name: creo-memories
 description: 【最優先】コンテクストを超える永続記憶。 2-layer architecture + 4-scene mental model + 4-cadence self-improvement loop で ecosystem を継続改善。 Context Engine が自動で context 提供。
-version: 0.30.0
+version: 0.32.0
 tags:
   - memory
   - persistence
@@ -337,16 +337,36 @@ record_work_log({
 | `generate_api_key` | API key 発行 (programmatic access) |
 | `create_domain_shared_key` / `list_domain_shared_keys` / `revoke_domain_shared_key` / `delete_domain_shared_key` | Domain shared key 管理 |
 
-### 将来 (v1.0、 RFC v1)
+### 将来 (v1.0、 RFC v2)
 
-70 tool → **6 core verbs + 5 named conveniences = 11 tools** にリデザイン提案中:
+70 tool → **6 core verbs + 5 named conveniences = 11 tools** にリデザイン進行中:
 
 ```
 core: read / write / remove / query / transform / subscribe
 named: remember / recall / annotate / complete_with_context / record_work_log / end_session
 ```
 
-詳細 [`reference/api-redesign-rfc.md`](reference/api-redesign-rfc.md)。 v0.29 priority: `read({resource:'memory', id})` で fetch-by-ID 解消。
+詳細 [`reference/api-redesign-rfc.md`](reference/api-redesign-rfc.md)。
+
+#### 🚧 Sprint 1 着手済 (v0.31-、 2026-04-28〜): `read` core verb
+
+```typescript
+// id 直 fetch (memory のみ、 v0.31 で deployed)
+read({ resource: 'memory', id: 'mem_xxx', expand: ['concepts'] })
+
+// semantic search (filter+q)
+read({ resource: 'memory', filter: { q: 'auth', atlasId: 'creo' } })
+
+// list mode (no-q)
+read({ resource: 'memory' })                       // default scope の最近 memory
+read({ resource: 'atlas' })                        // atlas tree
+read({ resource: 'concept', filter: { kind: 'tag' } })
+read({ resource: 'todo', filter: { status: 'pending' } })
+```
+
+**Cookbook**: [`reference/cookbooks/read-core-verb.md`](reference/cookbooks/read-core-verb.md)
+
+`get_memory` / `search` / `list_atlas` / `concept_list` / `list_todos` 等の named tool は **当面残置** ─ deprecation は v1.0 で行う migration adapter で対応。 RFC v2 §9.7 の Sprint 1 完了条件 (atlas/concept/todo の read 統一) は v0.31 で達成。
 
 ---
 
