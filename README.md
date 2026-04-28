@@ -2,6 +2,17 @@
 
 Persistent memory system for Claude Code. Remember context, decisions, and learnings across sessions with semantic search, automatic context delivery, and a 4-scene mental model.
 
+## What's New in v0.30
+
+- **API Redesign RFC v2** — Open Questions 4 件 answer + Breaking Change Inventory:
+  - **Q1** `edge` first-class resource 採用 (link verb 抽象は却下)
+  - **Q2** `transaction({ ops })` 専用 verb 採用 (write 配列 overload は却下)、 `$N` placeholder で前 op 結果参照
+  - **Q3** subscribe channel = pull default + webhook + SSE 段階提供
+  - **Q4** Pre-save Detection は `write` option 維持 (専用 hook 化却下)
+- **Breaking Change Inventory** — v1.0.0 で削除される ~50 legacy tool の完全 list (60+ entry table)
+- **Implementation Sprint Plan** — 9-week roadmap (Sprint 1-8)、 server-side migration の concrete plan
+- **Q5 (fetch-by-ID) は v0.30 で完了** — creo-memories PR #353 で `get_memory` server-side 実装、 plugin RFC priority bump 達成
+
 ## What's New in v0.29
 
 - **Cookbook: Memory ID で fetch** — `cookbooks/fetch-memory-by-id.md`、 dogfood で発覚した API gap (id 直 fetch tool 無し) の workaround pattern 4 種を documented:

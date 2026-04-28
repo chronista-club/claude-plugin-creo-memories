@@ -1,10 +1,13 @@
-# API Redesign RFC v1 — 11-Tool Specification
+# API Redesign RFC v2 — 11-Tool Specification
 
-> **Status**: RFC v1 (formal spec phase)
-> **Predecessor**: `api-redesign.md` (proposal phase、 v0.23)
+> **Status**: RFC v2 (4 open questions answered + breaking change inventory)
+> **Predecessor**: RFC v1 (本 file、 Section 1-8 維持)、 `api-redesign.md` (proposal phase v0.23)
 > **Target**: v0.24+ phased migration、 server-side implement 着手準備
 > **Authors**: Claude Opus 4.7 + mako@creo-memories
-> **Date**: 2026-04-28
+> **Date**: 2026-04-28 (v1 → v2 amendments、 plugin v0.30 で RFC v2 化)
+> **Implementation status**:
+> - Q5 (fetch-by-ID): ✅ creo-memories PR #353 で `get_memory` 実装済 (v0.30 server-side)
+> - Q1-Q4: 本 v2 で answer、 server-side migration 着手準備
 
 ## 0. Scope
 
@@ -484,8 +487,169 @@ Plugin workaround: `cookbooks/fetch-memory-by-id.md` (search verbose pattern 等
 4. Implementation plan: server-side migration を sprint 単位で
 5. v0.24 (並立 phase) へ着手
 
+## 9. RFC v2 Amendments (2026-04-28、 plugin v0.30)
+
+v1 の Open Questions (Section 7) の Q1-Q4 に answer (Q5 は v0.29 で部分 answer 済、 server-side `get_memory` で v0.30 実装完了)。
+
+### 9.1 Q1 Answer: `edge` を first-class resource にする
+
+**採用**: `write({resource:'edge', payload:{from, to, relation}})` で edge を直接書ける。
+
+**Reasoning**:
+- SurrealDB は graph + document を unified に扱う、 edge も record として first-class
+- `query`/`read` の filter で `edge` 直接対象にできる (e.g., `read({resource:'edge', filter:{relation:'supersedes', from:{...}}})`)
+- 11-tool model の resource 集合に `edge` を含める統一性
+
+**Convenience override**: friction が観測されたら `link({from, to, relation})` を named alias として後付け追加可能 (v0.31+ 検討、 ただし default は edge first-class)。
+
+**Trade-off acceptance**: payload schema が他 resource より複雑、 ただし discriminated union で type safety 確保。
+
+### 9.2 Q2 Answer: `transaction({ ops })` 専用 verb で batch / atomic
+
+**採用**: 専用 verb、 `write([...])` overload は **却下**。
+
+```typescript
+transaction({
+  ops: [
+    { op: 'write', resource: 'memory', mode: 'create', payload: ... },
+    { op: 'write', resource: 'edge', payload: { from: $1, to: ..., relation: 'classifies' } },
+    { op: 'remove', resource: 'memory', id: ..., mode: 'soft' },
+  ],
+  isolation?: 'serializable' | 'snapshot',  // default snapshot
+  return?: 'all' | 'last'                    // default all
+})
+// → ops で `$1`, `$2` 等の placeholder で前 op の result id を参照可能
+```
+
+**Reasoning**:
+- `write([...])` は overload 解釈が曖昧 (single vs bulk vs transactional)
+- transaction は ACID で十分 well-known な concept、 atomic / rollback semantics が明示的
+- placeholder (`$1`) で「直前の id」を参照 = 「memory 作成 → 即座に edge 張る」を 1 atomic で表現可能
+
+**Trade-off**: 1-op の場合は冗長、 ただし direct `write` を呼べば良いので問題なし。
+
+### 9.3 Q3 Answer: subscribe channel = pull default + webhook + SSE optional
+
+**採用**: 3 channel すべて support。 server-side は段階実装 (pull → SSE → webhook 順)。
+
+```typescript
+subscribe({
+  filter: ...,
+  events: ['created', 'updated', 'deleted', 'linked'],
+  ttl?: number,
+  channel?: 'pull' | 'webhook' | 'sse',  // default 'pull'
+  webhookUrl?: string,                    // channel='webhook' 時必須
+})
+```
+
+**Reasoning**:
+- **pull (current)** は環境制約少ない、 default
+- **SSE** は real-time UI (`/views` scene の dashboard auto-refresh 等) で必要
+- **webhook** は CI / Slack / Discord notify で必要、 ただし server から外向き接続 = security review 要
+
+**Migration**: pull → SSE → webhook の順で v0.X.Y で段階提供。
+
+### 9.4 Q4 Answer: Pre-save Detection は `write` option 維持 (専用 hook 化しない)
+
+**却下**: 専用 hook (`detect_duplicates(content)` ) への分離。
+
+**採用**: `write` の `options.detectDuplicates: boolean` のまま。
+
+**Reasoning**:
+- 専用 hook 化は 2-step API (detect → review → write) で agent UX 悪化
+- option 化なら **default true** で常に動作、 必要なら `{ detectDuplicates: false }` で skip
+- Pre-save Detection は memory 固有の concern、 generic write の中で処理可能
+
+**例外**: detection 結果のみ取りたい case (e.g., dashboard で「類似 memory 検出」表示) は将来 `transform({ source: { content: ... }, op: 'detect_duplicates' })` で対応可能 (v0.31+ 候補)。
+
+### 9.5 Breaking Change Inventory (v1.0.0)
+
+v0.24 並立 phase → v0.25 deprecation → v1.0.0 removal で削除される legacy tool 全 list:
+
+#### Memory CRUD (legacy → new)
+- ❌ `update_memory` → ✅ `write({resource:'memory', mode:'update'})`
+- ❌ `forget` → ✅ `remove({resource:'memory'})`
+- ❌ `recall_relevant` → ✅ `recall(...)` (rename) or `query({resource:'memory'})`
+
+#### Annotation
+- ❌ `annotate(memId, kind, content)` → ✅ `write({resource:'annotation', mode:'create', payload:{memoryId, kind, content}})`
+- ❌ `get_annotations(memId)` → ✅ `read({resource:'annotation', filter:{memoryId}})`
+- ❌ `reply_annotation(...)` → ✅ `write({resource:'annotation', mode:'create', payload:{parentId, ...}})`
+
+#### Concept
+- ❌ `concept_create/update/delete` → ✅ `write/remove({resource:'concept', ...})`
+- ❌ `concept_list({kind})` → ✅ `read({resource:'concept', filter:{kind}})`
+- ❌ `concept_classify(memId, names)` → ✅ `write({resource:'edge', payload:{from:memory, to:concept, relation:'classifies'}})`
+- ❌ `concept_get_by_memory(memId)` → ✅ `read({resource:'concept', filter:{classifiesMemoryId:memId}})`
+
+#### Atlas / Team
+- ❌ `create/list/update/delete_atlas` → ✅ `write/read/remove({resource:'atlas'})`
+- ❌ `share_atlas(atlasId, teamId, perm)` → ✅ `write({resource:'edge', payload:{...}})`
+- ❌ `team_*` (4 件) → ✅ `write/read/remove({resource:'team'})` + edge for membership
+
+#### Process / Compass / Story
+- ❌ `create_process/get_process/detect_processes` → ✅ `write({resource:'process'})` + `transform({op:'process_detect'})`
+- ❌ `generate_compass/generate_story` → ✅ `transform({op:'compass'/'story'})`
+
+#### Health / Profile / Logs
+- ❌ `memory_health/get_profile/project_progress/system_health/diagnose` → ✅ `transform({op:...})`
+- ❌ `search_logs` → ✅ `query({resource:'log'})`
+
+#### External / Todo / Subscription / Work Log / Presence
+- ❌ `link_external/find_by_external/complete_with_context` → ✅ `write({resource:'edge'})` + `complete_with_context` named alias 維持
+- ❌ `create_todo/list_todos/update_todo/complete_todo/delete_todo` → ✅ `write/read/remove({resource:'todo'})`
+- ❌ `subscribe_memories/unsubscribe_memories/list_subscriptions/check_notifications` → ✅ `subscribe(...)` + `transform({op:'drain'})`
+- ❌ `record_work_log/search_work_logs` → ✅ `record_work_log` named alias 維持 + `query({resource:'work_log'})`
+- ❌ `update_presence/get_presence` → ✅ `write/read({resource:'presence'})`
+
+#### Session / Auth / Domain Shared Keys
+- ❌ `get_session/get_user/get_status` → ✅ `read({resource:'session'/'user'/'status'})`
+- ❌ `end_session` → ✅ `end_session` named alias 維持
+- ❌ `generate_api_key` → ✅ `write({resource:'api_key', mode:'create'})`
+- ❌ `create_domain_shared_key/list_domain_shared_keys/revoke_domain_shared_key/delete_domain_shared_key` → ✅ `write/read/remove({resource:'shared_key'})`
+
+#### Shared Context
+- ❌ `create_shared_context/list_shared_contexts/get_shared_context` → ✅ `write/read({resource:'shared_context'})`
+- ❌ `add_to_shared_context/join_shared_context/leave_shared_context` → ✅ `write/remove({resource:'edge'})`
+
+#### v0.30 で追加された tool (RFC v1.5、 v1.0 に carry-over)
+- ✅ `get_memory(id, expand?)` — v1.0.0 で `read({resource:'memory', id})` に rename、 ただし `recall(id)` named alias 併設
+
+**Breaking change count**: ~50 legacy tool removal、 6 named alias 維持 (remember / recall / annotate / complete_with_context / record_work_log / end_session)。
+
+### 9.6 Migration helper (v0.25 で server-side が出力)
+
+deprecation phase で legacy tool 呼び出し時に server-side が以下を log:
+
+```
+[DEPRECATED] update_memory → use write({resource:'memory', mode:'update', id, payload:...})
+  Removal: v1.0.0 (planned 2026-Q3)
+  Migration guide: see api-redesign-rfc.md Section 9.5
+```
+
+agent (Claude) が log を読んで自発的 migrate する pattern を期待。
+
+### 9.7 Implementation Sprint Plan (server-side、 v0.31+)
+
+- **Sprint 1** (1 week): `read` core verb + memory/atlas/concept/todo の read 統一
+- **Sprint 2** (1 week): `write` core verb + edge first-class
+- **Sprint 3** (1 week): `remove` + `query` + filter union schema
+- **Sprint 4** (2 weeks): `transform` + 全 op (compass/story/health/etc.)
+- **Sprint 5** (1 week): `subscribe` + pull channel
+- **Sprint 6** (1 week): `transaction` + named convenience aliases
+- **Sprint 7** (1 week): SSE + webhook channels
+- **Sprint 8** (1 week): legacy → new migration matrix を server-side adapter で
+- **Total**: 9 weeks (v0.31 → v0.39)
+
+### 9.8 Open Questions (RFC v2 → v3 で再検討)
+
+1. `recall(id)` shortcut の必要性 — `read({resource:'memory', id})` で十分?
+2. `transaction` の placeholder 構文 (`$1` vs `$ops[0].id` 等) — clearer な syntax は?
+3. webhook の retry / DLQ 戦略 — server-side で持つか agent 側で?
+
 ## 関連
 
 - `api-redesign.md` — proposal phase (v0.23)
 - `mcp-tools.md` — 現状 70 tool 詳細
+- creo-memories PR #353 — `get_memory` server-side 実装 (Q5 答え)
 - (Layer 1 memory) `creo-memories-2-layer-architecture.md` — 2 layer 設計、 本 RFC は Layer 2 cloud の API 設計
