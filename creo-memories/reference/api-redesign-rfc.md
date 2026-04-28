@@ -462,12 +462,27 @@ type ApiError = {
 4. **Pre-save Detection** を `write` の option ではなく専用 hook (`detect_duplicates(content)`) に分離する?
 5. **`recall` を `query` の sub-case とするか別 tool として残すか** — convenience 度合いの判断
 
+### 7.5 (v0.29 で部分 answer): fetch-by-ID priority
+
+**Q5 派生**: 「`recall(id)` で memory ID 直 fetch 可能にすべきか?」
+
+**Answer (2026-04-28)**: **YES、 highest priority**。 dogfood で API gap が表面化、 server-side 着手最優先 task に位置付け。
+
+実装形式 (採用):
+- `read({resource:'memory', id})` を canonical (RFC v1 統一)
+- `recall(id)` は convenience alias として併設 (id 1 引数 case のみ short-cut)
+- visibility check: private は owner、 public は誰でも (HTTP `/api/public/r/<id>` と等価動作)
+
+詳細 requirement: Layer 2 memory `mem_1CaVwGZxyXADC2vg3PE5Qg` (server-side tracker)
+Plugin workaround: `cookbooks/fetch-memory-by-id.md` (search verbose pattern 等)
+
 ## 8. Next Steps
 
 1. Server-side team review → RFC v1 feedback
-2. RFC v2: 上記 open questions に answer + breaking change inventory
-3. Implementation plan: server-side migration を sprint 単位で
-4. v0.24 (並立 phase) へ着手
+2. **🔥 v0.29 priority: `read({resource:'memory', id})` server-side implement** — dogfood で API gap 確認、 最優先 task
+3. RFC v2: 残 open questions (1-4) に answer + breaking change inventory
+4. Implementation plan: server-side migration を sprint 単位で
+5. v0.24 (並立 phase) へ着手
 
 ## 関連
 
