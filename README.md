@@ -2,6 +2,16 @@
 
 Persistent memory system for Claude Code. Remember context, decisions, and learnings across sessions with semantic search, automatic context delivery, and a 4-scene mental model.
 
+## What's New in v0.28
+
+- **`scripts/quarterly-loop.sh`** — 90-day cadence の data prep + meta-loop checklist。 plugin commit / release history + Layer 1 / cross-cycle convergence trend prep + counterfactual + strategic direction の 10 section scaffold (~3h reasoning は agent)
+- **`creo-memories/reference/api-redesign-rfc.md`** — 70 → 11 tool redesign の **formal spec phase**。 v0.23 proposal を superceding:
+  - 11 tool の **JSON schema** (input / output / discriminated union)
+  - **Migration matrix** (50+ legacy tool → new mapping table)
+  - **3 phase migration** (v0.24 並立 → v0.25 deprecation → v1.0.0 removal)
+  - **Test scenarios** (各 tool 5+ 件)
+  - **Open questions** for RFC v2 (edge first-class? batch transaction? channel impl?)
+
 ## What's New in v0.27
 
 - **jaq drop-in 自動検出** — 全 hook + script に `JQ=$(command -v jaq 2>/dev/null || command -v jq)` を inline 化。 jaq install 済なら自動で 5-10x 速い path、 未 install なら jq fallback
