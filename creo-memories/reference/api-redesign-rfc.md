@@ -22,6 +22,8 @@
 
 ### 1.1 `read` — Resource fetch
 
+> 🚧 **Sprint 1 status (2026-04-28)**: PR [#354](https://github.com/chronista-club/creo-memories/pull/354) で scaffolding 済 (T1 + T5 動作確認)。 残 T2/T3/T4 + atlas/concept/todo は §9.7 参照。
+
 **Purpose**: id 直 fetch / filter 多 fetch / list 統一 verb。
 
 **Input schema**:
@@ -401,11 +403,11 @@ server-side: legacy router removal、 schema migration (もし schema 変更が�
 
 ### 4.1 read
 
-- T1: `read({resource:'memory', id:'mem_xxx'})` → 単 memory fetch
-- T2: `read({resource:'memory', filter:{atlasId:'creo'}, limit:10})` → atlas 内 memory
-- T3: `read({resource:'memory', expand:['atlas','concepts']})` → 関連 inline
-- T4: `read({resource:'memory'})` → default scope (project)、 default limit 50
-- T5: `read({resource:'memory', filter:{q:'auth'}})` → semantic + structured
+- ✅ T1: `read({resource:'memory', id:'mem_xxx'})` → 単 memory fetch (PR #354 deployed)
+- ⬜ T2: `read({resource:'memory', filter:{atlasId:'creo'}, limit:10})` → atlas 内 memory (no-q list mode、 Sprint 1 残)
+- ⬜ T3: `read({resource:'memory', expand:['atlas','concepts']})` → 関連 inline
+- ⬜ T4: `read({resource:'memory'})` → default scope (project)、 default limit 50
+- ✅ T5: `read({resource:'memory', filter:{q:'auth'}})` → semantic + structured (PR #354 deployed)
 
 ### 4.2 write
 
@@ -631,7 +633,9 @@ agent (Claude) が log を読んで自発的 migrate する pattern を期待。
 
 ### 9.7 Implementation Sprint Plan (server-side、 v0.31+)
 
-- **Sprint 1** (1 week): `read` core verb + memory/atlas/concept/todo の read 統一
+- **Sprint 1** (1 week): `read` core verb + memory/atlas/concept/todo の read 統一  
+  - 🚧 **着手済 (2026-04-28、 PR [#354](https://github.com/chronista-club/creo-memories/pull/354))**: scaffolding + memory resource 2 mode (id 直 fetch / filter+q semantic) deployed to production
+  - **残作業**: ① memory resource の no-q list mode (default scope)、 ② atlas / concept / todo の resource dispatch 追加
 - **Sprint 2** (1 week): `write` core verb + edge first-class
 - **Sprint 3** (1 week): `remove` + `query` + filter union schema
 - **Sprint 4** (2 weeks): `transform` + 全 op (compass/story/health/etc.)
