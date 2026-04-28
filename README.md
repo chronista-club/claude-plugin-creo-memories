@@ -2,6 +2,16 @@
 
 Persistent memory system for Claude Code. Remember context, decisions, and learnings across sessions with semantic search, automatic context delivery, and a 4-scene mental model.
 
+## What's New in v0.29
+
+- **Cookbook: Memory ID で fetch** — `cookbooks/fetch-memory-by-id.md`、 dogfood で発覚した API gap (id 直 fetch tool 無し) の workaround pattern 4 種を documented:
+  - search verbose mode (推奨、 認証込みで private も)
+  - public memory の HTTP `/api/public/r/<id>`
+  - get_provenance preview (1 行のみ)
+  - concept_get_by_memory (metadata のみ)
+- **RFC v1.5 priority bump** — `read({resource:'memory', id})` を **server-side 着手最優先** に位置付け、 v0.29 priority section 追加
+- **SKILL.md tool inventory 拡充** (imp-003 完了) — 4-scene 別に **全 70 tool** を表形式で明示、 言及率 30% → ~80% に向上 (navigability 改善)
+
 ## What's New in v0.28
 
 - **`scripts/quarterly-loop.sh`** — 90-day cadence の data prep + meta-loop checklist。 plugin commit / release history + Layer 1 / cross-cycle convergence trend prep + counterfactual + strategic direction の 10 section scaffold (~3h reasoning は agent)
