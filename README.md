@@ -2,6 +2,13 @@
 
 Persistent memory system for Claude Code. Remember context, decisions, and learnings across sessions with semantic search, automatic context delivery, and a 4-scene mental model.
 
+## What's New in v0.33
+
+- **Cookbook: Session Snapshot** — `cookbooks/session-snapshot.md`、 session 全体の goal / decisions / open_questions / next-step を **1 memory に pin** する recipe。 cross-worktree / cross-day continuity 用。 既存 `record_work_log` (event 単位) と粒度分離、 `onboarding.md` の resume と pair (== Capture/Structure/Pin/Confirm/Resume の 5 motion を既存 70 tool でレシピ化、 新 tool 追加なし)
+- **Onboarding cookbook 増補** — 「前 session の session-snapshot から resume」 chapter を **step 0** として追加 (`search(tags:['session-snapshot'])` → next_step pickup → open_questions 提示)
+- **Stop hook 強化** — session 終了前 checklist に session-snapshot pin nudge を 1 行追加。 「session goal + decisions が連続したら 1 memory に pin」 を passive nudge
+- **No skill rename** — `creo-memories` skill 名は維持、 既存メンタルモデル (4-scene / 序破離 / decision tree) と整合性最優先で機能取り込み
+
 ## What's New in v0.30
 
 - **API Redesign RFC v2** — Open Questions 4 件 answer + Breaking Change Inventory:
