@@ -11,6 +11,19 @@
 
 ## 一連の手順 (session resume の場合)
 
+### 0. 前 session の session-snapshot を resume (もしあれば)
+
+```
+mcp__creo-memories__search({
+  tags: ['session-snapshot'],
+  atlasId,
+  category: 'session',
+  limit: 1
+})
+```
+
+最新 snapshot が返れば content を read、 `next_step` から再開。 `open_questions` は user に提示して 1 問ずつ解消。 詳細: [`cookbooks/session-snapshot.md`](session-snapshot.md)。
+
 ### 1. Context Engine が auto 提供する内容を確認
 
 session 開始時、 plugin が以下を auto-inject:
@@ -158,3 +171,4 @@ invite された相手に対して:
 
 - 久しぶり復帰 → `cookbooks/cycle-close.md` の「review 出力」 を逆引きで掴む
 - 大型 Epic 着手前 → `cookbooks/decision-record.md` で前提 ADR を read
+- session 終了時の保存 (resume の対 motion) → `cookbooks/session-snapshot.md`

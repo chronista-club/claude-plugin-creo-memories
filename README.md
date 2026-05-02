@@ -2,6 +2,26 @@
 
 Persistent memory system for Claude Code. Remember context, decisions, and learnings across sessions with semantic search, automatic context delivery, and a 4-scene mental model.
 
+## What's New in v0.34
+
+- **Internal memory link 構文** ★Creo 特有★ — markdown 本文中で `[label](mem_xxx)` を書くと memory 間 link になる。 graph traversability の基本記法。 ([CREO-156](https://linear.app/chronista/issue/CREO-156))
+  - **storage**: shorthand `[label](mem_xxx)` をそのまま保存 (domain hardcode なし、 軽量)
+  - **creo-web**: SPA navigation で `/memories/mem_xxx` へ遷移 (page reload なし)
+  - **claude.ai / 外部 MCP client**: `get_memory` / `read` / `search` 経由で full URL `https://creo-memories.in/r/mem_xxx` に server-side 自動展開
+  - **fenced code block 内**: raw のまま (コード例で `[fake](mem_xxx)` 書ける)
+  - **2 layer 分離設計**: creo-ui MarkdownViewer は **不変** (Chronista 全 product の共通基盤、 mem_xxx 知識を組み込まず)、 consumer 側 (creo-memories) で完結
+- **Cookbook: link-to-memory** — `cookbooks/link-to-memory.md`、 「派生元 pin / 序破離 chain / dogfood report」 等の use case + 表示 context 別 mechanism 解説
+- **SKILL.md セクション 0.5 追加** — Decision Tree 直後に **重要事項** として位置付け (Creo-specific syntax で全 memory 執筆者が知るべき)
+- **Phase 1.5+ deferred**: bare `mem_xxx` の Linear-style auto-link / hover preview / autocomplete / backlinks graph
+- **Phase 4 deferred**: 他 entity (`atl_xxx` / `tag_xxx` 等) への link は creo-ui に linkResolver prop 追加して plugin 化
+
+## What's New in v0.33
+
+- **Cookbook: Session Snapshot** — `cookbooks/session-snapshot.md`、 session 全体の goal / decisions / open_questions / next-step を **1 memory に pin** する recipe。 cross-worktree / cross-day continuity 用。 既存 `record_work_log` (event 単位) と粒度分離、 `onboarding.md` の resume と pair (== Capture/Structure/Pin/Confirm/Resume の 5 motion を既存 70 tool でレシピ化、 新 tool 追加なし)
+- **Onboarding cookbook 増補** — 「前 session の session-snapshot から resume」 chapter を **step 0** として追加 (`search(tags:['session-snapshot'])` → next_step pickup → open_questions 提示)
+- **Stop hook 強化** — session 終了前 checklist に session-snapshot pin nudge を 1 行追加。 「session goal + decisions が連続したら 1 memory に pin」 を passive nudge
+- **No skill rename** — `creo-memories` skill 名は維持、 既存メンタルモデル (4-scene / 序破離 / decision tree) と整合性最優先で機能取り込み
+
 ## What's New in v0.30
 
 - **API Redesign RFC v2** — Open Questions 4 件 answer + Breaking Change Inventory:

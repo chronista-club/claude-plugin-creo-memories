@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo '💡 Session 終了前 checklist:\\n- 重要な decision / learning は mcp__creo-memories__remember で Layer 2 に保存\\n- agent 間 comm が発生したなら mcp__creo-memories__record_work_log で persist\\n- 未昇格の ttl memory に価値があれば update_memory({id, ttl: null}) で永続化\\n- 完了した PR / Issue は complete_with_context で 1 発 close'"
+            "command": "echo '💡 Session 終了前 checklist:\\n- 重要な decision / learning は mcp__creo-memories__remember で Layer 2 に保存\\n- agent 間 comm が発生したなら mcp__creo-memories__record_work_log で persist\\n- 未昇格の ttl memory に価値があれば update_memory({id, ttl: null}) で永続化\\n- 完了した PR / Issue は complete_with_context で 1 発 close\\n- session goal + decisions が連続したなら cookbooks/session-snapshot.md で 1 memory に pin (cross-device 復元 + 連続性保持)'"
           }
         ]
       }
