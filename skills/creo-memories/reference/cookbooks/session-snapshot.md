@@ -65,18 +65,27 @@ mcp__creo-memories__remember({
 })
 ```
 
-### 4. Confirm — 次 session で resume できるか確認
+### 4. Confirm — 真の save 成否確認
+
+`remember` の戻り値で id が返れば save 成功。 念のため verify するなら **id 直 fetch** が確実:
+
+```
+mcp__creo-memories__get_memory({
+  id: '<remember 戻り値の id>'
+})
+```
+
+⚠️ **注意**: `search` で metadata-only filter (query 空 + tags / category 指定) は **0 件を返す** (semantic / hybrid どちらの searchType でも実装上 query 必須、 v0.34 時点)。 search で確認したい場合は query を必ず指定:
 
 ```
 mcp__creo-memories__search({
+  query: 'session snapshot {project}',  // 必須
   tags: ['session-snapshot'],
   atlasId,
   category: 'session',
   limit: 1
 })
 ```
-
-最新 snapshot が返れば save 成功。
 
 ### 5. (任意) inter-agent comm の flush
 
@@ -96,12 +105,28 @@ mcp__creo-memories__record_work_log({
 
 ### 1. 最新 snapshot を search
 
+⚠️ **search は query 必須** (`searchType: 'semantic'` / `'hybrid'` どちらでも、 metadata-only mode は 0 件返却、 v0.34 時点)。 必ず query を指定:
+
 ```
 mcp__creo-memories__search({
+  query: 'session snapshot {project}',  // 必須
   tags: ['session-snapshot'],
   atlasId,
   category: 'session',
   limit: 5
+})
+```
+
+または **`read` core verb** (v0.31+、 strict filter mode は query 不要):
+
+```
+mcp__creo-memories__read({
+  resource: 'memory',
+  filter: {
+    tags: ['session-snapshot'],
+    category: 'session',
+    atlasId
+  }
 })
 ```
 
@@ -123,10 +148,11 @@ context を再構築。
 
 ## 一連の手順 (list / history)
 
-session-snapshot history を編年的に辿る:
+session-snapshot history を編年的に辿る (search は **query 必須**):
 
 ```
 mcp__creo-memories__search({
+  query: 'session snapshot {project}',  // 必須
   tags: ['session-snapshot'],
   atlasId,
   category: 'session',
@@ -135,7 +161,19 @@ mcp__creo-memories__search({
 })
 ```
 
-`includeSuperseded: true` で supersede chain 全体を列挙可能。
+`includeSuperseded: true` で supersede chain 全体を列挙可能。 query を渡さない場合は `read` core verb (filter strict、 query 不要):
+
+```
+mcp__creo-memories__read({
+  resource: 'memory',
+  filter: {
+    tags: ['session-snapshot'],
+    category: 'session',
+    atlasId,
+    includeSuperseded: true
+  }
+})
+```
 
 ## metadata 設計 (まとめ)
 
@@ -167,7 +205,7 @@ save:
   })
 
 session 2 (worktree: vantage-point, branch: mako/sub に attach):
-  search({ tags:['session-snapshot'], atlasId:'vantage-point', limit:1 })
+  search({ query:'session snapshot vantage-point', tags:['session-snapshot'], atlasId:'vantage-point', limit:1 })
     → 最新 snapshot fetch
   next_step pickup → docs/design/09-... 起こし開始
 ```

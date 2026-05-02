@@ -2,6 +2,12 @@
 
 Persistent memory system for Claude Code. Remember context, decisions, and learnings across sessions with semantic search, automatic context delivery, and a 4-scene mental model.
 
+## What's New in v0.34.2
+
+- **Cookbook fix: session-snapshot.md `search` query 必須を明示** — dogfood で発見、 query 空の metadata-only filter は **0 件返却** (`searchType: 'semantic'` / `'hybrid'` どちらでも実装上 query 必須、 v0.34 時点)。 Phase 4 Confirm を `get_memory({id})` 主路線に変更、 Resume / List で query 必須を WARNING 明示
+- **SKILL.md frontmatter version drift fix** — `version: 0.34.0` → `0.34.2` (plugin.json `0.34.1` との drift を一気に解消、 0.34.1 を skip)
+- **CHANGELOG mis-category fix** — `[0.34.0]` の Changed entry "Spec compliance: license/homepage fields, removed legacy skills.txt" は実際 PR #16 (v0.34.1) で main 着地した内容 → v0.34.1 entry に移動
+
 ## What's New in v0.34
 
 - **Internal memory link 構文** ★Creo 特有★ — markdown 本文中で `[label](mem_xxx)` を書くと memory 間 link になる。 graph traversability の基本記法。 ([CREO-156](https://linear.app/chronista/issue/CREO-156))
