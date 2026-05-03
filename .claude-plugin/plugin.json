@@ -1,7 +1,7 @@
 {
   "name": "creo-memories",
   "description": "Persistent memory system for Claude Code - remember context, decisions, and learnings across sessions",
-  "version": "0.34.1",
+  "version": "0.34.2",
   "author": {
     "name": "Chronista Club",
     "url": "https://github.com/chronista-club"
