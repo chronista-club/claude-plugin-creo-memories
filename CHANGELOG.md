@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.35.0] - 2026-05-14
+
+### Added
+- **atomic tag CRUD primitives**: 単独 tag を原子的に追加/削除/rename する 3 新 MCP tool ([CREO-174](https://linear.app/chronista/issue/CREO-174))
+  - `add_tag(id, tag)` — 既存 tag なら no-op (idempotent)
+  - `remove_tag(id, tag)` — 不在 tag なら no-op (idempotent)
+  - `rename_tag(id, oldTag, newTag)` — oldTag 不在は `ValidationError` throw
+  - dual storage 同時更新 (`tags` top-level + `metadata.tags` nested、 SurrealQL `array::distinct`/`array::complement`)
+  - chain 伸長しない (in-place、 atomic tag CRUD は非意味的変更扱い)
+  - concept service 連携 (classify / declassify を非 blocking で並走)
+- HTTP endpoint も同型で追加: `POST/DELETE/PATCH /api/memories/:id/tags`
+- 既存 `update_memory({tags: [...]})` (全置換) との **後方互換維持**、 並走で expose
+
+### Documentation
+- `mcp-tools.md`: 3 新 tool を articulate + `update_memory` の tag 操作節に使い分けガイド追記
+
 ## [0.34.2] - 2026-05-02
 
 ### Fixed
