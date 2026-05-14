@@ -275,6 +275,83 @@ update_memory({ id: "mem_xxx", atlasId: "atl_yyy" })
 // → メモリの所属Atlasを変更
 ```
 
+**tag操作の注意** (v0.35.0〜):
+- `tags: [...]` 指定は**全置換**（既存 tags 配列を新配列で上書き）
+- **単独 tag を 1 個だけ追加/削除/rename したい場合**は `add_tag` / `remove_tag` / `rename_tag` を使うこと
+  - race condition 安全（並行 add でも両方反映）
+  - payload 軽量（100 tag 持つ memory に 1 tag 追加でも 100 tag 送り直し不要）
+  - dual storage 整合（`tags` top-level + `metadata.tags` nested を 1 statement で原子的更新）
+
+---
+
+### add_tag
+
+memoryに単独tagを原子的に追加します（既存 tag なら no-op = idempotent）。
+
+```typescript
+mcp__creo-memories__add_tag({
+  id: "mem_xxx",                // 必須
+  tag: "new-tag"                // 必須
+})
+```
+
+**ポイント**:
+- 既存 tag を再追加しても重複しない（SurrealQL `array::distinct` で uniq 保証）
+- `tags` top-level + `metadata.tags` nested を **1 statement で同時更新**（dual storage 整合）
+- concept service 連携: tag を concept として classify（既存 pattern を踏襲、 非 blocking）
+- 戻り値: updated memory object 全体（既存 PUT `/:id` と同 shape）
+- chain 伸長**しない**（in-place 更新、 atomic tag CRUD は非意味的変更扱い）
+
+**使い分け**:
+- 1 個追加 → `add_tag` （atomic、 race-safe）
+- 一括置換 → `update_memory({tags: [...]})` （bulk replace）
+
+---
+
+### remove_tag
+
+memoryから単独tagを原子的に削除します（不在 tag なら no-op = idempotent）。
+
+```typescript
+mcp__creo-memories__remove_tag({
+  id: "mem_xxx",                // 必須
+  tag: "old-tag"                // 必須
+})
+```
+
+**ポイント**:
+- 不在 tag を削除しても error にならない（idempotent）
+- dual storage 同時更新（`array::complement` で remove）
+- concept service 連携: tag を concept から declassify（非 blocking）
+- 戻り値: updated memory object 全体
+
+---
+
+### rename_tag
+
+memoryの特定tagを別名にrenameします（原子的、 oldTag 不在は error）。
+
+```typescript
+mcp__creo-memories__rename_tag({
+  id: "mem_xxx",                // 必須
+  oldTag: "draft",              // 必須
+  newTag: "in-progress"         // 必須
+})
+```
+
+**ポイント**:
+- `oldTag` が存在しない場合は `ValidationError` を throw（silent no-op しない）
+  - 理由: rename は明示的意図、 不在 = caller の前提崩壊（typo / stale state / race）、 silent success は debug を腐らせる
+  - idempotency が欲しい場合は caller 側で `if (tags.includes(old)) rename else add` の 2-call で表現
+- 1 SurrealQL statement で atomic 更新（remove + union）
+- concept service: oldTag を declassify、 newTag を classify
+- 戻り値: updated memory object 全体
+
+**HTTP endpoint対応** (= MCP 外):
+- `POST /api/memories/:id/tags` body `{tag: string}` → add_tag
+- `DELETE /api/memories/:id/tags/:tag` (URL encode) → remove_tag
+- `PATCH /api/memories/:id/tags/:tag` body `{to: string}` → rename_tag
+
 ---
 
 ### forget
