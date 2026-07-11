@@ -1,14 +1,16 @@
 # API Redesign Proposal — Few-but-Composable
 
 > **本 file は将来方向の設計提案 doc**。 v0.23 では implement されない。 v0.24+ で段階移行を想定。
+>
+> **現状 (2026-07-11 注記)**: 棚卸し当時からの tool 数は 70→72 に更新済み。`domain_shared_key`系は現行では `atlas_shared_key`に改名済み（かつ現在マルチユーザー前提のため無効化中、creo-memories本体 #237）。それ以外の baseline tool 名は現行実装と同期済み。
 
 ## 動機
 
-現状 plugin の tool 数 = **約 70 件**。 LLM agent (Claude Code) の navigate 容量を超えており、 多くの tool が「存在を忘れられる」 = activation gap の **upstream な原因**。
+現状 plugin の tool 数 = **約 72 件**。 LLM agent (Claude Code) の navigate 容量を超えており、 多くの tool が「存在を忘れられる」 = activation gap の **upstream な原因**。
 
 skill / cookbook / hook で「使え」と圧かけても tool 数自体を減らさないと limit に当たる。 本 doc は **「少ない core verb + curated 名付きエルゴ」** の 11-tool API への redesign を提案する。
 
-## 棚卸し: 現状 70 tools の分布
+## 棚卸し: 現状 72 tools の分布
 
 ### Memory CRUD (4)
 remember / search / update_memory / forget
@@ -61,12 +63,12 @@ update_presence / get_presence
 ### Work Log (2)
 record_work_log / search_work_logs
 
-### Domain Shared Keys (legacy?) (4)
-create_domain_shared_key / list / revoke / delete
+### Atlas Shared Keys (現在無効化中、#237) (4)
+create_atlas_shared_key / list / revoke / delete
 
 ### Categories / Labels (concept_* で deprecated 候補) (~10+)
 
-**合計: ~70 tool**
+**合計: ~72 tool**
 
 ## Pattern 観察
 
@@ -129,7 +131,7 @@ remove({
   mode?: 'soft' | 'hard'  // soft = status:cancelled、 hard = 物理削除
 })
 // 統合: forget, delete_atlas, concept_delete, delete_todo, unsubscribe_memories,
-//       team_remove, leave_shared_context, unshare_atlas, revoke_domain_shared_key 等 (~10 tool)
+//       team_remove, leave_shared_context, unshare_atlas, revoke_atlas_shared_key 等 (~10 tool)
 ```
 
 **4. `query`** — semantic + structured search
@@ -192,7 +194,7 @@ write({resource:'memory', mode:'update', payload:{status:'done', resultSummary}}
 
 **11. `end_session`** — finalization (cleanup ttl-expired + 未昇格 summary + summary memory 作成提案)
 
-### 合計 11 tools (現状 70 → -84%)
+### 合計 11 tools (現状 72 → -85%)
 
 ## 設計的整合性
 
@@ -244,22 +246,22 @@ external_link / parent_of / member_of
 
 ### v0.24: 並立 phase (compatibility)
 
-新 11 tool を **追加** (addition only)、 既存 70 tool は維持。 Skill が新 tool を default 推奨、 既存 tool は legacy として残す。
+新 11 tool を **追加** (addition only)、 既存 72 tool は維持。 Skill が新 tool を default 推奨、 既存 tool は legacy として残す。
 
 ### v0.25: deprecation phase
 
-既存 70 tool を **deprecated** marker、 invocation 時に warning log。 Skill から legacy 記述削除、 cookbook 全面新 tool 化。
+既存 72 tool を **deprecated** marker、 invocation 時に warning log。 Skill から legacy 記述削除、 cookbook 全面新 tool 化。
 
 ### v0.26: removal phase (major version)
 
-legacy 70 tool 削除。 v0.26 = breaking change major。 残 11 tool が canonical。
+legacy 72 tool 削除。 v0.26 = breaking change major。 残 11 tool が canonical。
 
 ## メリット (期待される impact)
 
 1. **LLM activation 向上**: 11 tool は普通に navigate 可能、 「忘れる」 が起きにくい
 2. **Compositional creativity**: `transform({source:{filter:{atlasId,status:'done'}}, op:'compass'})` のように、 「done memory の Compass」が 1 op で natural に書ける。 現状は generate_compass + 内部 atlas filter で曖昧
 3. **Schema discipline**: 全 resource が同 filter / payload schema を共有、 学習コスト 1/N
-4. **Documentation 簡素化**: 70 tool 個別 description → 11 tool 深掘り。 reference doc サイズ縮減
+4. **Documentation 簡素化**: 72 tool 個別 description → 11 tool 深掘り。 reference doc サイズ縮減
 
 ## デメリット / リスク
 

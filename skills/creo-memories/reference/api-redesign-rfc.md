@@ -8,6 +8,7 @@
 > **Implementation status**:
 > - Q5 (fetch-by-ID): ✅ creo-memories PR #353 で `get_memory` 実装済 (v0.30 server-side)
 > - Q1-Q4: 本 v2 で answer、 server-side migration 着手準備
+> - **現状 (2026-07-11 注記)**: baseline tool 数は 70→72 に更新。`recall_relevant`は本RFCの想定（`recall`への改名）とは異なり、実装では`search`に統合済み（`recall`という独立 tool は現存しない）。`domain_shared_key`系は`atlas_shared_key`に改名済み（現在無効化中、creo-memories本体 #237）。以下のmigration matrix・resource 名は提案時点のものとして扱うこと（本file中の`atlas_shared_key`表記は現行名に合わせて更新済み）。
 
 ## 0. Scope
 
@@ -128,7 +129,7 @@ type WriteResponse = {
 ```
 
 **統合する legacy tools** (~22 件):
-remember, update_memory, create_atlas, update_atlas, concept_create, concept_update, create_todo, update_todo, annotate, reply_annotation, create_shared_context, add_to_shared_context, team_create, team_invite, link_external (edge), record_work_log, update_presence, create_process, subscribe_memories, generate_api_key, create_domain_shared_key 等
+remember, update_memory, create_atlas, update_atlas, concept_create, concept_update, create_todo, update_todo, annotate, reply_annotation, create_shared_context, add_to_shared_context, team_create, team_invite, link_external (edge), record_work_log, update_presence, create_process, subscribe_memories, generate_api_key, create_atlas_shared_key 等
 
 ### 1.3 `remove` — Delete (soft / hard)
 
@@ -152,7 +153,7 @@ type RemoveResponse = {
 ```
 
 **統合する legacy tools** (~10 件):
-forget, delete_atlas, concept_delete, delete_todo, unsubscribe_memories, team_remove, leave_shared_context, unshare_atlas, revoke_domain_shared_key, delete_domain_shared_key
+forget, delete_atlas, concept_delete, delete_todo, unsubscribe_memories, team_remove, leave_shared_context, unshare_atlas, revoke_atlas_shared_key, delete_atlas_shared_key
 
 ### 1.4 `query` — Semantic + structured search
 
@@ -370,10 +371,10 @@ type EndSessionResponse = {
 | `get_session()` / `get_user()` / `get_status()` | `read({resource:'session'/'user'/'status'})` |
 | `end_session()` | `end_session()` (named alias 維持) |
 | `generate_api_key()` | `write({resource:'api_key', mode:'create'})` |
-| `create_domain_shared_key(...)` | `write({resource:'shared_key', mode:'create', payload:...})` |
-| `list_domain_shared_keys()` | `read({resource:'shared_key'})` |
-| `revoke_domain_shared_key(id)` | `write({resource:'shared_key', mode:'update', id, payload:{revoked:true}})` |
-| `delete_domain_shared_key(id)` | `remove({resource:'shared_key', id})` |
+| `create_atlas_shared_key(...)` | `write({resource:'shared_key', mode:'create', payload:...})` |
+| `list_atlas_shared_keys()` | `read({resource:'shared_key'})` |
+| `revoke_atlas_shared_key(id)` | `write({resource:'shared_key', mode:'update', id, payload:{revoked:true}})` |
+| `delete_atlas_shared_key(id)` | `remove({resource:'shared_key', id})` |
 | `create_shared_context(...)` | `write({resource:'shared_context', mode:'create', payload:...})` |
 | `join_shared_context(ctxId)` | `write({resource:'edge', payload:{from:user, to:ctx, relation:'member_of'}})` |
 | `leave_shared_context(ctxId)` | `remove({resource:'edge', id:edgeId})` |
@@ -383,19 +384,19 @@ type EndSessionResponse = {
 
 ### v0.24 (並立 phase)
 
-新 11 tool を **追加** (addition only)。 既存 70 tool は **維持** (deprecation warning なし)。 SKILL.md が新 tool を default 推奨、 既存 tool は legacy として残す。
+新 11 tool を **追加** (addition only)。 既存 72 tool は **維持** (deprecation warning なし)。 SKILL.md が新 tool を default 推奨、 既存 tool は legacy として残す。
 
 server-side: 新 tool router + adapter (新 tool が legacy tool を内部呼び出し or 直接実装)。
 
 ### v0.25 (deprecation phase)
 
-既存 70 tool を **deprecated** marker、 invocation 時に warning log。 SKILL.md から legacy 記述削除、 cookbook 全面新 tool 化。
+既存 72 tool を **deprecated** marker、 invocation 時に warning log。 SKILL.md から legacy 記述削除、 cookbook 全面新 tool 化。
 
 server-side: deprecated tool は warning log + 同じ動作維持。
 
 ### v0.26 (removal phase, major version = v1.0.0)
 
-legacy 70 tool 削除。 v1.0.0 = breaking change major release。 残 11 tool が canonical。
+legacy 72 tool 削除。 v1.0.0 = breaking change major release。 残 11 tool が canonical。
 
 server-side: legacy router removal、 schema migration (もし schema 変更があれば)。
 
@@ -608,7 +609,7 @@ v0.24 並立 phase → v0.25 deprecation → v1.0.0 removal で削除される l
 - ❌ `get_session/get_user/get_status` → ✅ `read({resource:'session'/'user'/'status'})`
 - ❌ `end_session` → ✅ `end_session` named alias 維持
 - ❌ `generate_api_key` → ✅ `write({resource:'api_key', mode:'create'})`
-- ❌ `create_domain_shared_key/list_domain_shared_keys/revoke_domain_shared_key/delete_domain_shared_key` → ✅ `write/read/remove({resource:'shared_key'})`
+- ❌ `create_atlas_shared_key/list_atlas_shared_keys/revoke_atlas_shared_key/delete_atlas_shared_key` → ✅ `write/read/remove({resource:'shared_key'})`
 
 #### Shared Context
 - ❌ `create_shared_context/list_shared_contexts/get_shared_context` → ✅ `write/read({resource:'shared_context'})`
@@ -654,6 +655,6 @@ agent (Claude) が log を読んで自発的 migrate する pattern を期待。
 ## 関連
 
 - `api-redesign.md` — proposal phase (v0.23)
-- `mcp-tools.md` — 現状 70 tool 詳細
+- `mcp-tools.md` — 現状 72 tool 詳細
 - creo-memories PR #353 — `get_memory` server-side 実装 (Q5 答え)
 - (Layer 1 memory) `creo-memories-2-layer-architecture.md` — 2 layer 設計、 本 RFC は Layer 2 cloud の API 設計
