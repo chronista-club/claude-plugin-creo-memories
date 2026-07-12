@@ -30,6 +30,8 @@ read({ resource: 'memory', id: 'mem_1CaVnfJRgWtuRgZD9yQSoV' })
 // → 単 memory の full content + metadata
 ```
 
+`id` は memory の id 自体だけでなく、 slug / display-name（完全一致）でも解決される（B-2、id → slug → display-name の 3 段解決）。
+
 `expand` で関連 resource も同時取得:
 
 ```typescript
