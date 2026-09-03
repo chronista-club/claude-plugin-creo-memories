@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [0.54.0] - 2026-09-03
 
 ### Added
 - **Agent Atlas の案内**: SessionStart hook に `/agent` (全 agent 共通) と `/agent/claude` (Claude 専用) の
@@ -14,6 +14,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   他 agent にも効く知識は `/agent` (tag `agent:claude`)。`atlasId` 指定の search は子 atlas を含まない注意つき。
   規約の SSOT は `/agent` atlas の charter memory (slug `agent-charter`)、要約を
   `skills/creo-memories/reference/agent-atlas.md` に置き、SKILL.md / decision-tree.md の Decision Tree に Q2.5 を追加
+
+### Changed
+- **ロックステップ方針の撤回**: `0.53.0` でプロダクト (`chronista-club/creo-memories`) に版数を揃えたが、
+  plugin 側の変更とプロダクトのリリースは周期が異なり、揃え続けると plugin 単独の変更を出せない
+  (プロダクトは既に `0.55.0`)。今後 plugin は自身の変更内容に応じて独立に bump する。
+
+### Fixed
+- **SKILL.md frontmatter の version drift**: `0.35.0` → `0.54.0`。`0.53.0` で `plugin.json` だけを bump し
+  `skills/creo-memories/SKILL.md` が取り残されていた (`0.34.2` で解消した drift の再発)。
 
 ## [0.53.0] - 2026-09-01
 
