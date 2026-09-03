@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.54.1] - 2026-09-03
+
+### Fixed
+- **SessionStart hook が plugin 実体を見つけられない不整合**: hook 内の
+  `find … -name "claude-plugin-creo-memories*"` は plugin cache のディレクトリ名
+  (`creo-memories`、marketplace.json の `name` 由来であって repo 名ではない) と一致せず
+  **構造的に必ず空振り**し、常に fallback の `$HOME/repos/claude-plugin-creo-memories` が
+  使われていた。repo を clone していない環境では `scripts/infer-atlas.sh` に到達できず、
+  `|| echo ""` に吸われて Atlas 推論が無言で無効化される。`${CLAUDE_PLUGIN_ROOT}` 参照に変更し、
+  インラインの `sh -c` を `hooks/session-start.sh` に切り出した
+  (chronista-style / vantage-point と同じ形)。出力は変更前と byte 単位で一致することを確認済み。
+
 ## [0.54.0] - 2026-09-03
 
 ### Added
