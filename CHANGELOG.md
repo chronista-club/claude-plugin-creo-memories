@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.53.0] - 2026-09-01
+
+### Changed
+- **ロックステップ復帰**: プロダクト (`chronista-club/creo-memories`) の `0.53.0` に版数を揃えた。
+  `0.35.0` (2026-05-15) 以降 bump が止まり、プロダクトだけが進んでいたため 18 マイナー分の
+  ズレが生じていた。`0.36.0`〜`0.52.0` は欠番。
+- SKILL.md / RFC の tool 名・tool 数を現行実装 (72 tool) に同期 (#20)
+- B-2 slug/display_name resolver を SKILL.md に反映 (#21)
+
+### Fixed
+- `0.35.0` 以降 `skills/` の中身が更新されていた (#20 / #21 で 5 ファイル 49 行) にもかかわらず
+  `plugin.json` の version が据え置かれていた問題を解消。marketplace 側は version を持たず
+  (chronista-plugins #10)、配布される版数は本 repo の `plugin.json` がそのまま使われるため、
+  version を据え置くと「新しい版が出た」シグナルがどこにも立たない。
+
 ## [0.35.0] - 2026-05-14
 
 ### Added
