@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [Unreleased]
+
+### Added
+- **Agent Atlas の案内**: SessionStart hook に `/agent` (全 agent 共通) と `/agent/claude` (Claude 専用) の
+  使い分けを 1 行出すようにした。project の記憶は project atlas、自分の癖・修正点は `/agent/claude`、
+  他 agent にも効く知識は `/agent` (tag `agent:claude`)。`atlasId` 指定の search は子 atlas を含まない注意つき。
+  規約の SSOT は `/agent` atlas の charter memory (slug `agent-charter`)、要約を
+  `skills/creo-memories/reference/agent-atlas.md` に置き、SKILL.md / decision-tree.md の Decision Tree に Q2.5 を追加
+
 ## [0.53.0] - 2026-09-01
 
 ### Changed

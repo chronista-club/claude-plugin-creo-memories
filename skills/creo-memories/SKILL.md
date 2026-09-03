@@ -38,6 +38,12 @@ memory に書きたい / 読みたい / 動かしたい時、 **必ずこの順�
 - **Yes** → **Layer 2 (cloud)** に書く: `mcp__creo-memories__remember` で plugin 経由
 - **No** → 書かなくて OK か reconsider
 
+### Q2.5: これは「自分 (agent) の癖・修正点」か?
+
+**Yes** — Layer 2 の **actor 軸 atlas**。project に依らず自分にだけ効くなら `/agent/claude`、他の agent (Codex / Grok) にも効くなら `/agent`。tag `agent:claude`。Layer 1 の local memory にも書いてよいが、他 model / 他 machine から見えるのは atlas 側だけ。詳細: [reference/agent-atlas.md](reference/agent-atlas.md)
+
+**No** — Q3 へ。
+
 ### Q3 (補助): multi-agent / multi-session で参照されるか?
 
 - **Yes** → 必ず Layer 2

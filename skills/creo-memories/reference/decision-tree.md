@@ -32,6 +32,13 @@
 
 **No** (どちらでもない) — 書かなくて OK か reconsider。
 
+
+## Q2.5: これは「自分 (agent) の癖・修正点」か?
+
+**Yes** — Layer 2 の actor 軸 atlas。 project に依らず自分にだけ効くなら `/agent/claude`、 他の agent (Codex / Grok) にも効くなら `/agent`。 tag `agent:claude`。 Layer 1 にも書いてよいが、 他 model / 他 machine から見えるのは atlas 側だけ。 詳細: [agent-atlas.md](agent-atlas.md)
+
+**No** — Q3 へ。
+
 ## Q3 (補助): multi-agent / multi-session で参照されるか?
 
 **Yes** — 必ず Layer 2 (Q1 の不変方針でも team 共有が必要なら Layer 2 にもコピー)。
