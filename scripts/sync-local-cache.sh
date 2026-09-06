@@ -37,7 +37,7 @@ mode="run"
 while [ $# -gt 0 ]; do
   case "$1" in
     --background) mode="background" ;;
-    --cwd) cwd="$2"; shift ;;
+    --cwd) cwd="${2:-}"; shift ;;
     *) ;;
   esac
   shift
@@ -60,7 +60,8 @@ fi
 command -v curl > /dev/null 2>&1 || { echo "creo-sync: curl が無い"; exit 0; }
 key=$(api_key) || exit 0
 
-dir_key=$(printf '%s' "$cwd" | sed 's#/#-#g')
+# Claude Code の project dir 名 = cwd の英数字以外を全部 `-` に (`.vp/lanes/ios` → `--vp-lanes-ios`、実測 2026-09-07)
+dir_key=$(printf '%s' "$cwd" | sed 's/[^A-Za-z0-9]/-/g')
 mem_dir="$HOME/.claude/projects/$dir_key/memory"
 stamp="$STATE_DIR/$dir_key.stamp"
 lock="$STATE_DIR/$dir_key.lock"
@@ -70,6 +71,8 @@ if [ -z "${CREO_SYNC_FORCE:-}" ] && [ -f "$stamp" ] && [ -n "$(find "$stamp" -mm
   echo "creo-sync: 1 時間以内に同期済 ($dir_key)"; exit 0
 fi
 mkdir -p "$STATE_DIR"
+# 1 時間より古い lock は死骸 (SIGKILL / 再起動で trap が走らない) とみなして壊す
+if [ -d "$lock" ] && [ -z "$(find "$lock" -maxdepth 0 -mmin -60 2>/dev/null)" ]; then rmdir "$lock" 2>/dev/null; fi
 if ! mkdir "$lock" 2>/dev/null; then echo "creo-sync: 別の同期が走っている"; exit 0; fi
 trap 'rmdir "$lock" 2>/dev/null' EXIT
 
@@ -96,7 +99,7 @@ fetch_atlas() {
 }
 
 tmp=$(mktemp)
-trap 'rm -f "$tmp"; rmdir "$lock" 2>/dev/null' EXIT
+trap 'rm -f "$tmp" "$tmp.top" "$tmp.all"; rmdir "$lock" 2>/dev/null' EXIT
 ok=1
 for a in ${atlas:+"$atlas"} claude agent; do
   fetch_atlas "$a" >> "$tmp" || { echo "creo-sync: $a の取得に失敗 (前回の写しを残す)"; ok=0; }
@@ -105,9 +108,17 @@ done
 
 # 上限 (既定 150 件、更新日の新しい順)。超えた分は index に件数を出す = 手入れ (label を外す / 減衰の提案) の合図
 MAX="${CREO_CACHE_MAX:-150}"
+case "$MAX" in ''|*[!0-9]*) MAX=150 ;; esac
 total=$($JQ -s 'length' "$tmp")
-$JQ -s -c 'sort_by(.updated_at // .updatedAt // "") | reverse | .[:'"$MAX"'] | .[]' "$tmp" > "$tmp.top" && mv -f "$tmp.top" "$tmp"
+cp "$tmp" "$tmp.all"
+$JQ -s -c --argjson max "$MAX" 'sort_by(.updated_at // .updatedAt // "") | reverse | .[:$max] | .[]' "$tmp" > "$tmp.top" && mv -f "$tmp.top" "$tmp"
 omitted=$((total > MAX ? total - MAX : 0))
+omitted_names=()
+if [ "$omitted" -gt 0 ]; then
+  while IFS= read -r n; do [ -n "$n" ] && omitted_names+=("$n"); done < <(
+    $JQ -s -r --argjson max "$MAX" 'sort_by(.updated_at // .updatedAt // "") | reverse | .[$max:] | .[] | (.metadata.cache.name // (.content | split("\n")[0] | sub("^#+ *"; "")))' "$tmp.all" 2>/dev/null \
+      | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//' | cut -c1-63)
+fi
 
 mkdir -p "$mem_dir"
 index="$mem_dir/MEMORY.md"
@@ -119,10 +130,19 @@ while IFS= read -r line; do
   name=$(printf '%s' "$line" | $JQ -r '.metadata.cache.name // empty')
   title=$(printf '%s' "$line" | $JQ -r '(.content | split("\n")[0]) | sub("^#+ *"; "")')
   # YAML で素のまま置けない題 (": " や " #" や引用符を含む、特殊文字で始まる) は double-quoted (JSON の escape と互換)
-  ytitle=$(printf '%s' "$title" | $JQ -R -r 'if test(": | #|[\"\\\\]|^[\\[\\]{}&*!|>%@`'"'"']") then tojson else . end')
+  ytitle=$(printf '%s' "$title" | $JQ -R -r 'if test(": | #|[\"\\\\]|^[\\[\\]{}&*!|>%@`'"'"'-?,]|:$") then tojson else . end')
   if [ -z "$name" ]; then
     name=$(printf '%s' "$title" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//' | cut -c1-63)
     [ -z "$name" ] && name=$(printf '%s' "$line" | $JQ -r '.id')
+  fi
+  # file 名に使える形に (creo の metadata は共有 atlas なら他の書き手の入力。`/` `..` `..` を通さない)
+  name=$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//' | cut -c1-63)
+  [ -z "$name" ] && name=$(printf '%s' "$line" | $JQ -r '.id')
+  # 同じ名前が 2 度出たら黙って上書きせず id を添える
+  case " ${written[*]:-} " in *" $name "*) name="$name-$(printf '%s' "$line" | $JQ -r '.id' | tail -c 7)" ;; esac
+  # creo 由来でない同名の local file は消さず退避する (消さない、の約束)
+  if [ -f "$mem_dir/$name.md" ] && ! grep -q '^  creo_id: ' "$mem_dir/$name.md"; then
+    mv -f "$mem_dir/$name.md" "$mem_dir/$name.local-only.md"
   fi
   typ=$(printf '%s' "$line" | $JQ -r '.metadata.cache.type // (if .kind == "learning" then "feedback" elif .kind == "reference" then "reference" else "project" end)')
   {
@@ -130,7 +150,7 @@ while IFS= read -r line; do
       "$name" "$ytitle" "$typ" "$(printf '%s' "$line" | $JQ -r '.id')" \
       "$(printf '%s' "$line" | $JQ -r '.kind // "未整理"')" "$(printf '%s' "$line" | $JQ -r '.updated_at // .updatedAt // ""')"
     printf '%s' "$line" | $JQ -r '.content | split("\n") | .[1:] | (if .[0] == "" then .[1:] else . end) | join("\n")'
-  } > "$mem_dir/.$name.md.tmp" && mv -f "$mem_dir/.$name.md.tmp" "$mem_dir/$name.md"
+  } > "$mem_dir/.$name.md.tmp" && mv -f "$mem_dir/.$name.md.tmp" "$mem_dir/$name.md" || { echo "creo-sync: 書けなかった: $name"; continue; }
   written+=("$name")
   count=$((count + 1))
 done < "$tmp"
@@ -139,7 +159,7 @@ done < "$tmp"
 {
   printf '# Memory Index\n\n'
   printf '<!-- creo の写し (label cache:claude、atlas: %s + /agent/claude + /agent)。正本は creo。生成: sync-local-cache.sh %s -->\n\n' "${atlas:-?}" "$(date -u +%Y-%m-%dT%H:%MZ)"
-  [ "$omitted" -gt 0 ] && printf '> ⚠️ label cache:claude が %s 件あり、上限 %s を超えた %s 件を省いた (古い順)。creo 側で label を外すか減衰を提案して減らす\n\n' "$total" "$MAX" "$omitted"
+  [ "$omitted" -gt 0 ] && printf '> ⚠️ label cache:claude が %s 件あり、上限 %s を超えた %s 件を省いた (古い順。file は残るが index には載せない)。creo 側で label を外すか減衰を提案して減らす\n\n' "$total" "$MAX" "$omitted"
   for n in "${written[@]:-}"; do
     [ -z "$n" ] && continue
     d=$(sed -n 's/^description: //p' "$mem_dir/$n.md" | head -1 | $JQ -R -r 'if startswith("\"") then (fromjson? // .) else . end')
@@ -147,9 +167,12 @@ done < "$tmp"
   done
   local_only=()
   for f in "$mem_dir"/*.md; do
+    [ -e "$f" ] || continue
     b=$(basename "$f" .md)
     [ "$b" = "MEMORY" ] && continue
-    case " ${written[*]:-} " in *" $b "*) ;; *) local_only+=("$b") ;; esac
+    skip=0
+    for w in "${written[@]:-}" "${omitted_names[@]:-}"; do [ "$w" = "$b" ] && { skip=1; break; }; done
+    [ "$skip" = 1 ] || local_only+=("$b")
   done
   if [ ${#local_only[@]} -gt 0 ]; then
     printf '\n## local にしか無い (creo に未登録。正本は creo — remember して label cache:claude を)\n\n'
