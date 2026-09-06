@@ -51,7 +51,7 @@
 ## 自己と cache (D7 / D8 / D28)
 
 - 自己は actor 軸の atlas: 人は `/Personal`、agent は `/agent/<name>` (`/agent/claude`)。agent 共通の知識は `/agent`
-- **外部脳は一つ (creo)。local (`~/.claude/projects/<p>/memory/`) は写し** — 起動高速化と、creo に繋がらない時の可用性のため。同期は creo → local の一方向 (実装は plugin の次版)。local にしか無い事実を作らない: まず `/agent/claude` に remember、同じ手で local も更新
+- **外部脳は一つ (creo)。local (`~/.claude/projects/<p>/memory/`) は写し** — 起動高速化と、creo に繋がらない時の可用性のため。同期は creo → local の一方向 (plugin 0.56.0 の `scripts/sync-local-cache.sh`、SessionStart から背景で 1 時間に 1 回)。写すのは **label `cache:claude` が付いた記憶 ∩ (この repo の atlas ∪ `/agent/claude` ∪ `/agent`)**、上限 150 件 (更新日の新しい順、超えた分は index に件数だけ)。1 記憶 = 1 file (`metadata.cache.name` か題から file 名)、MEMORY.md は index。creo に無い local file は消さず index の別節に並ぶ (= local にしか無い事実の検出器)。認証は `~/.config/creo-memories/api-key` (chmod 600) か env `CREO_API_KEY`、無ければ黙って skip。local に直接書かない: remember + label `cache:claude`
 
 ## つながり (D29)
 

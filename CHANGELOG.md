@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.56.0] - 2026-09-07
+
+### Added — creo → local memory の写し (spec 25 D8 / D28、F-2)
+- `scripts/sync-local-cache.sh`: この repo の atlas と `/agent/claude` `/agent` のうち label **`cache:claude`** が付いた記憶を `~/.claude/projects/<p>/memory/` に 1 記憶 = 1 file で写し、MEMORY.md (index) を作り直す。SessionStart から背景で (1 時間に 1 回、`CREO_SYNC_FORCE=1` で即時)。上限 `CREO_CACHE_MAX` (既定 150、更新日の新しい順)。creo に無い local file は消さず index の別節に並べる。認証は `~/.config/creo-memories/api-key` (chmod 600) → env `CREO_API_KEY` → 無ければ skip
+- SKILL §C / model.md: 手元に置きたい記憶は remember + label `cache:claude` (local に直接書かない)
+- 初回の backfill (local → creo、1 回もの) は creo-memories 側の `scripts/local-cache-backfill.py` (frontmatter の name を slug と `metadata.cache.name` に、type → kind)
+
 ## [0.55.0] - 2026-09-06
 
 ### Changed — 賢いモデルのための全面書き直し (spec 25 の世界に)

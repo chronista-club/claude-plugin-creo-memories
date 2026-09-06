@@ -1,7 +1,7 @@
 ---
 name: creo-memories
 description: creo-memories = 外部脳。context が尽きても、session / machine / model / 人をまたいで続きができる場所。書くのは「次に拾う誰かのため」、読むのは「自分が始めた気になる前」。
-version: 0.55.0
+version: 0.56.0
 tags:
   - memory
   - external-brain
@@ -40,7 +40,7 @@ tags:
 
 ### どこへ
 - project のことは **project の atlas** (session 開始の hook が手がかりを出す。無ければ `read({ resource: 'atlas' })`)
-- 自分の癖・訂正・失敗の post-mortem は **`/agent/claude`** (正本はこちら、local の `~/.claude/projects/<p>/memory/` は写し)。他 agent にも効く知識は `/agent`。詳細: [agent-atlas.md](reference/agent-atlas.md)
+- 自分の癖・訂正・失敗の post-mortem は **`/agent/claude`**、他 agent にも効く知識は `/agent`、project の文脈の学びは project atlas。**local の `~/.claude/projects/<p>/memory/` は creo の写し** — 次の session でも手元に置きたい記憶には label **`cache:claude`** を付ける (hook が creo → local を生成する。local に直接書いた事実は次の同期で「creo に未登録」として index の別節に出る)。詳細: [agent-atlas.md](reference/agent-atlas.md)
 - mako 個人の情報や一回性の感想は書かない
 
 ### 読む
