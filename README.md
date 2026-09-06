@@ -1,6 +1,6 @@
 # claude-plugin-creo-memories
 
-Claude Code plugin for **creo-memories** — the external brain. Your context is finite and the session ends; creo is where the continuation lives, shared with the next you, other agents (codex / grok), and people.
+Claude Code plugin for **creo-memories** — the external brain. Your context is finite and the session ends; creo is where the continuation lives, shared with the next you, the other agents working alongside (codex / grok / other LLMs / another claude session), and the people you work with.
 
 ## What it gives Claude
 

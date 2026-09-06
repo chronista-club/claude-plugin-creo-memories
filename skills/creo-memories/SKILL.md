@@ -13,8 +13,8 @@ tags:
 
 ## A. 目的
 
-あなたの context は有限で、session は終わる。続きを拾うのは次の自分、codex や grok、mako や waki。
-**creo は全員が同じものを読む外部脳**であり、記録 (todo / spec / 決定 / 引き継ぎ) の SSOT でもある。
+あなたの context は有限で、session は終わる。続きを拾うのは、次の自分、連動して動く他の agent (codex / grok / 他の LLM、そして別 session の claude)、そして一緒に働く人。
+**creo はその全員が同じものを読む外部脳**であり、記録 (todo / spec / 決定 / 引き継ぎ) の SSOT でもある。
 
 - **書く**のは「次に拾う誰かのため」。決めた / 学んだ / 壊れた / 渡す / 後で自分が探す、のどれかなら書く。会話の写しは書かない
 - **読む**のは「自分が始めた気になる前」。session 開始の「今日の脳」は自動で入る。過去の決定を前提にする前に `search`
@@ -58,7 +58,7 @@ label を作る / lock と unlock / review 段の提案の受け入れ。agent �
 
 ## D. 他者と
 
-- 記憶は **人が web / iOS で読み、codex や grok も同じ atlas を読む**。題を 1 行目に、結論を先に、前提と根拠を短く
+- 記憶は **一緒に働く人が web / iOS で読み、連動する他の agent (codex / grok / 他の LLM / 別 session の claude) も同じ atlas を読む**。題を 1 行目に、結論を先に、前提と根拠を短く
 - 他 agent への引き継ぎは **todo + annotation** (creo が SSOT。wire や chat は通知)。相手の `/agent/<name>` には書かない (読むのは自由)
 - 規約の正本は `/agent` の charter (agent 共通)。この skill はその Claude 向けの写し + Claude Code の hook
 - 「今日も上手くできました」の日記は書かない。**次に同じ局面で助かるか**だけが基準
