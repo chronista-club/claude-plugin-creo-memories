@@ -6,7 +6,7 @@ Claude Code plugin for **creo-memories** — the external brain. Your context is
 
 - **MCP server** `https://mcp.creo-memories.in/` (75 tools; tool descriptions are the source of truth)
 - **Skill** `creo-memories` — purpose, the shape of the world (3 lineages × 16 kinds, marks, labels, lock, proposals, briefing, sender), the judgment for *what to write / where / when to read*, how to work with others, and the non-obvious traps. ≤ 120 lines. No mandates: the mechanical rules are enforced by the server
-- **Hooks** (4, one line each)
+- **Hooks** (4 events, one line each; SessionStart also regenerates the local memory cache from creo in the background — label `cache:claude`)
   - `SessionStart` — the atlas hint for this repo (the server does not know your cwd)
   - `PreCompact` — before the context shrinks: write the handoff
   - `Stop` — decisions / learnings / unfinished todos go to creo
@@ -22,6 +22,7 @@ skills/creo-memories/
   reference/recipes.md     6 scenes: start / handoff / decision / incident / todo / with others
   reference/agent-atlas.md /agent and /agent/claude, local as cache
 hooks/                     hooks.json, session-start.sh, pre-compact.sh
+scripts/                   infer-atlas.sh, sync-local-cache.sh (creo → ~/.claude/projects/<p>/memory/)
 scripts/infer-atlas.sh     cwd / git remote → atlas slug
 ```
 
