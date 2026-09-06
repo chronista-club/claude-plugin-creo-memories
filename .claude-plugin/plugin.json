@@ -1,7 +1,7 @@
 {
   "name": "creo-memories",
-  "description": "Persistent memory system for Claude Code - remember context, decisions, and learnings across sessions",
-  "version": "0.54.1",
+  "description": "External brain for Claude Code — continue across sessions, machines, models and people via creo-memories",
+  "version": "0.55.0",
   "author": {
     "name": "Chronista Club",
     "url": "https://github.com/chronista-club"
@@ -9,9 +9,9 @@
   "repository": "https://github.com/chronista-club/claude-plugin-creo-memories",
   "keywords": [
     "memory",
-    "persistence",
+    "external-brain",
     "context",
-    "learning",
+    "collaboration",
     "knowledge-base"
   ],
   "license": "MIT",

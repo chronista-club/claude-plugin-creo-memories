@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.55.0] - 2026-09-06
+
+### Changed — 賢いモデルのための全面書き直し (spec 25 の世界に)
+- **8,063 行 → 約 600 行**。plugin が渡すのは「事実 (creo の世界の形) と目的と判断の基準」だけ。機械的な規則 (lock / 行為者 / 提案の門 / 種類の列挙 / label の上限) は server が守るので「必ず」「mandate」を全部落とした
+- **label は agent も作れる** (spec 25 D19 の改訂、2026-09-06): 文法 `family:leaf[:leaf]` (`:` 構造 / `-` 連結 / `/` は atlas 専用 / 大小無視) だけ決め、語彙は自由。`label_list` を先に見る、増えた分は減衰と統合の提案で手入れ。文法は規約 (server は長さと plan の上限だけ見る)。family の例は repo / priority / size / phase / mark / area
+- SKILL.md を A 目的 / B 世界の形 / C 判断の基準 / D 他者と / E 罠 の 5 節 (≤ 120 行) に。reference は `model.md` (spec 25 の要約) / `tools-map.md` (意図 → tool、75 tool、creo の CI が検証) / `recipes.md` (6 場面) / `agent-atlas.md` の 4 本
+- 2-layer「Layer 1 = Local Canon」を spec 25 D8 / D28 の言葉に: **正本は creo、local は写し** (creo → local の生成は次版)
+- hooks を 4 つに: SessionStart (atlas の手がかり、server は cwd を知らない) / **PreCompact (新、context が縮む前に handoff を促す)** / Stop (1 行) / PreToolUse(Write memory/*.md) (D8 の言葉に)
+- `infer-atlas.sh` を git remote 基準に (旧 branch 規則を撤去)、表は slug と repo 名が違うものだけ
+- creo-memories 側に contract test (`plugin-contract.test.ts`、CI job `plugin-contract`): tool 名の集合 / 引数名 / 撤去済み語彙 / hooks / version を検証。対の PR: chronista-club/creo-memories#862
+
+### Removed
+- `api-redesign.md` / `api-redesign-rfc.md` (creo の `docs/design/archive/` へ history として移動)、improvement-loop (reference 7 本 + command + scripts 4 本 + invocation-stats)、scenes 4 本、cookbooks 9 本、templates 8 本、workflows / anti-patterns / decision-tree / mcp-tools / setup、UserPromptSubmit (keyword regex) と PostToolUse (invocation.log) の hook、`.DS_Store`
+- 現存しない tool 24 種の案内 (`concept_*` ×8、`team_*` ×4、`share_atlas` 系 3、`subscribe_memories` 系 4、`add_tag` / `remove_tag` / `rename_tag`、RFC の仮想名)、旧引数名 (annotate の `memoryId` / `kind`、create_todo の `title`、record_work_log の `type`、link_external / complete_with_context の camelCase、search の `filter:{…}`)、序破離 / concept / category / stage の語彙、Linear の pair mandate
+
 ## [0.54.1] - 2026-09-03
 
 ### Fixed
