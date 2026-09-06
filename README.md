@@ -1,320 +1,46 @@
-# Creo Memories Plugin
+# claude-plugin-creo-memories
 
-Persistent memory system for Claude Code. Remember context, decisions, and learnings across sessions with semantic search, automatic context delivery, and a 4-scene mental model.
+Claude Code plugin for **creo-memories** — the external brain. Your context is finite and the session ends; creo is where the continuation lives, shared with the next you, other agents (codex / grok), and people.
 
-## What's New in v0.34.2
+## What it gives Claude
 
-- **Cookbook fix: session-snapshot.md `search` query 必須を明示** — dogfood で発見、 query 空の metadata-only filter は **0 件返却** (`searchType: 'semantic'` / `'hybrid'` どちらでも実装上 query 必須、 v0.34 時点)。 Phase 4 Confirm を `get_memory({id})` 主路線に変更、 Resume / List で query 必須を WARNING 明示
-- **SKILL.md frontmatter version drift fix** — `version: 0.34.0` → `0.34.2` (plugin.json `0.34.1` との drift を一気に解消、 0.34.1 を skip)
-- **CHANGELOG mis-category fix** — `[0.34.0]` の Changed entry "Spec compliance: license/homepage fields, removed legacy skills.txt" は実際 PR #16 (v0.34.1) で main 着地した内容 → v0.34.1 entry に移動
+- **MCP server** `https://mcp.creo-memories.in/` (75 tools; tool descriptions are the source of truth)
+- **Skill** `creo-memories` — purpose, the shape of the world (3 lineages × 16 kinds, marks, labels, lock, proposals, briefing, sender), the judgment for *what to write / where / when to read*, how to work with others, and the non-obvious traps. ≤ 120 lines. No mandates: the mechanical rules are enforced by the server
+- **Hooks** (4, one line each)
+  - `SessionStart` — the atlas hint for this repo (the server does not know your cwd)
+  - `PreCompact` — before the context shrinks: write the handoff
+  - `Stop` — decisions / learnings / unfinished todos go to creo
+  - `PreToolUse(Write */memory/*.md)` — local memory is a cache; the canonical copy is `/agent/claude`
 
-## What's New in v0.34
-
-- **Internal memory link 構文** ★Creo 特有★ — markdown 本文中で `[label](mem_xxx)` を書くと memory 間 link になる。 graph traversability の基本記法。 ([CREO-156](https://linear.app/chronista/issue/CREO-156))
-  - **storage**: shorthand `[label](mem_xxx)` をそのまま保存 (domain hardcode なし、 軽量)
-  - **creo-web**: SPA navigation で `/memories/mem_xxx` へ遷移 (page reload なし)
-  - **claude.ai / 外部 MCP client**: `get_memory` / `read` / `search` 経由で full URL `https://creo-memories.in/r/mem_xxx` に server-side 自動展開
-  - **fenced code block 内**: raw のまま (コード例で `[fake](mem_xxx)` 書ける)
-  - **2 layer 分離設計**: creo-ui MarkdownViewer は **不変** (Chronista 全 product の共通基盤、 mem_xxx 知識を組み込まず)、 consumer 側 (creo-memories) で完結
-- **Cookbook: link-to-memory** — `cookbooks/link-to-memory.md`、 「派生元 pin / 序破離 chain / dogfood report」 等の use case + 表示 context 別 mechanism 解説
-- **SKILL.md セクション 0.5 追加** — Decision Tree 直後に **重要事項** として位置付け (Creo-specific syntax で全 memory 執筆者が知るべき)
-- **Phase 1.5+ deferred**: bare `mem_xxx` の Linear-style auto-link / hover preview / autocomplete / backlinks graph
-- **Phase 4 deferred**: 他 entity (`atl_xxx` / `tag_xxx` 等) への link は creo-ui に linkResolver prop 追加して plugin 化
-
-## What's New in v0.33
-
-- **Cookbook: Session Snapshot** — `cookbooks/session-snapshot.md`、 session 全体の goal / decisions / open_questions / next-step を **1 memory に pin** する recipe。 cross-worktree / cross-day continuity 用。 既存 `record_work_log` (event 単位) と粒度分離、 `onboarding.md` の resume と pair (== Capture/Structure/Pin/Confirm/Resume の 5 motion を既存 70 tool でレシピ化、 新 tool 追加なし)
-- **Onboarding cookbook 増補** — 「前 session の session-snapshot から resume」 chapter を **step 0** として追加 (`search(tags:['session-snapshot'])` → next_step pickup → open_questions 提示)
-- **Stop hook 強化** — session 終了前 checklist に session-snapshot pin nudge を 1 行追加。 「session goal + decisions が連続したら 1 memory に pin」 を passive nudge
-- **No skill rename** — `creo-memories` skill 名は維持、 既存メンタルモデル (4-scene / 序破離 / decision tree) と整合性最優先で機能取り込み
-
-## What's New in v0.30
-
-- **API Redesign RFC v2** — Open Questions 4 件 answer + Breaking Change Inventory:
-  - **Q1** `edge` first-class resource 採用 (link verb 抽象は却下)
-  - **Q2** `transaction({ ops })` 専用 verb 採用 (write 配列 overload は却下)、 `$N` placeholder で前 op 結果参照
-  - **Q3** subscribe channel = pull default + webhook + SSE 段階提供
-  - **Q4** Pre-save Detection は `write` option 維持 (専用 hook 化却下)
-- **Breaking Change Inventory** — v1.0.0 で削除される ~50 legacy tool の完全 list (60+ entry table)
-- **Implementation Sprint Plan** — 9-week roadmap (Sprint 1-8)、 server-side migration の concrete plan
-- **Q5 (fetch-by-ID) は v0.30 で完了** — creo-memories PR #353 で `get_memory` server-side 実装、 plugin RFC priority bump 達成
-
-## What's New in v0.29
-
-- **Cookbook: Memory ID で fetch** — `cookbooks/fetch-memory-by-id.md`、 dogfood で発覚した API gap (id 直 fetch tool 無し) の workaround pattern 4 種を documented:
-  - search verbose mode (推奨、 認証込みで private も)
-  - public memory の HTTP `/api/public/r/<id>`
-  - get_provenance preview (1 行のみ)
-  - concept_get_by_memory (metadata のみ)
-- **RFC v1.5 priority bump** — `read({resource:'memory', id})` を **server-side 着手最優先** に位置付け、 v0.29 priority section 追加
-- **SKILL.md tool inventory 拡充** (imp-003 完了) — 4-scene 別に **全 70 tool** を表形式で明示、 言及率 30% → ~80% に向上 (navigability 改善)
-
-## What's New in v0.28
-
-- **`scripts/quarterly-loop.sh`** — 90-day cadence の data prep + meta-loop checklist。 plugin commit / release history + Layer 1 / cross-cycle convergence trend prep + counterfactual + strategic direction の 10 section scaffold (~3h reasoning は agent)
-- **`creo-memories/reference/api-redesign-rfc.md`** — 70 → 11 tool redesign の **formal spec phase**。 v0.23 proposal を superceding:
-  - 11 tool の **JSON schema** (input / output / discriminated union)
-  - **Migration matrix** (50+ legacy tool → new mapping table)
-  - **3 phase migration** (v0.24 並立 → v0.25 deprecation → v1.0.0 removal)
-  - **Test scenarios** (各 tool 5+ 件)
-  - **Open questions** for RFC v2 (edge first-class? batch transaction? channel impl?)
-
-## What's New in v0.27
-
-- **jaq drop-in 自動検出** — 全 hook + script に `JQ=$(command -v jaq 2>/dev/null || command -v jq)` を inline 化。 jaq install 済なら自動で 5-10x 速い path、 未 install なら jq fallback
-- **Atlas auto-inference** — `scripts/infer-atlas.sh` で current branch (Linear-style: `mako/creo-103-...` → `creo-memories`) + cwd basename + package.json name から atlas 推定。 SessionStart hook が自動的に「💡 Suggested Atlas: ...」を提示、 mcp__creo-memories__remember 等の atlasId を埋めるヒント
-- **Weekly + Biweekly loop wrapper** — `scripts/{weekly,biweekly}-loop.sh` で metric prep + checklist scaffold 自動化。 daily-loop.sh と合わせて 3 cadence の auto-prep 完備 (quarterly のみ依然 manual)
-
-## What's New in v0.26
-
-- **Plugin tool invocation instrumentation** — `PostToolUse` hook が `mcp__*creo-memories__*` 呼び出しを log:
-  - 出力先: `~/.claude/creo-memories-invocation.log`
-  - dogfood で観測: 「自分が plugin tool 何回呼んだか」 を biweekly loop で trend 化可能
-- **Daily loop wrapper script** — `scripts/daily-loop.sh` で Layer 1 memory health + invocation stats を 1 command で集約
-- **Invocation stats utility** — `scripts/invocation-stats.sh today|week|month|--since` で期間 filter + tool ranking (Markdown 表)
-- **jaq drop-in note** — `jq` の Rust 製代替 [`jaq`](https://github.com/01mf02/jaq) は hook 高頻度実行で起動 5-10x 速い、 syntax 互換、 `brew install jaq` で導入可
-
-## What's New in v0.25
-
-- **Self-Improvement Loop** — ecosystem (plugin / 本体 / docs / external / skill 自身) を周期的 audit する仕組み
-  - 4 cadence: daily (5 min) / weekly (20 min) / **biweekly (75 min, primary)** / quarterly (3 h)
-  - 設計原則 (8 axiom): hierarchical / Loop Dashboard pattern / ICE prioritization / incident-triggered ad-hoc / meta-loop / convergence / counterfactual / action chain closure
-  - Slash command `/creo-memories:improvement-loop [cadence]` (manual)
-  - SessionStart hook reminder (passive nudge)
-  - Cron-schedulable (autonomous via `/loop` skill)
-  - 詳細: [creo-memories/reference/improvement-loop/](creo-memories/reference/improvement-loop/README.md)
-
-## What's New in v0.24
-
-- **Active hooks** — passive echo hook → 真に動作する nudge hook へ:
-  - `PreToolUse(Write)` で `*/memory/*.md` 検出時に Layer 判定 prompt
-  - `UserPromptSubmit` で decision keyword (決定 / confirmed / done / merged 等) 検出 → remember 提案
-  - `Stop` で session 終了前 checklist (remember / record_work_log / ttl 昇格 / complete_with_context)
-- **Memory templates** — 7 scaffold (Layer 1: feedback / reference-card / project-canon、 Layer 2: decision-record / bug-fix / phase-completion / work-log)
-
-## What's New in v0.23
-
-- **2-layer architecture** — Local file canon (Layer 1) + Cloud trace-archive (Layer 2) の役割分担を明示
-- **4-scene mental model** — `/memories /atlas /views /actions` の 4 scene で operation を整理
-- **Decision tree** at skill top — どこに何を書くかが 1 query で決まる
-- **Trigger patterns + Anti-patterns** で活用駆動
-- **5 cookbooks** (Phase 完了 / Bug fix / Decision Record / Cycle close / Onboarding)
-- **API Redesign Proposal** — 70 tool → 11 tool 将来構想 doc 化
-
-## 2-Layer Architecture (重要)
-
-Creo Memories は **2 layer 並立**:
-
-| Layer | 場所 | 役割 |
-|---|---|---|
-| **Layer 1 — Local Canon** | `~/.claude/projects/<project>/memory/*.md` (markdown file) | **不変方針 / cross-project rule / reference card**。 緩慢に変化、 solo-authored、 MEMORY.md index で管理 |
-| **Layer 2 — Cloud Trace** | `mcp.creo-memories.in` (`mcp__creo-memories__*` tools) | **動的 project state / 出来事 trace / multi-agent collaboration**。 速く変化、 共有、 semantic search、 Atlas / Concept で structure |
-
-### どちらに書くか?
+## Layout
 
 ```
-Q1: 「自分 / プロジェクトが常に従う方針」か?
-  Yes → Layer 1 (local file)
-  No → Q2
-
-Q2: 「ある時点で起こった事実 / 決定 / 現状」か?
-  Yes → Layer 2 (cloud)
-  No → 書かなくて OK
-
-Q3 (補助): multi-agent / multi-session で参照?
-  Yes → Layer 2 (cloud)
-  Solo → Layer 1
+skills/creo-memories/
+  SKILL.md                 A purpose / B world / C judgment / D with others / E traps
+  reference/model.md       spec 25 summary (lineages, kinds, marks, label, lock, proposals, briefing, self & cache)
+  reference/tools-map.md   intent → tool (all 75; verified by creo-memories CI)
+  reference/recipes.md     6 scenes: start / handoff / decision / incident / todo / with others
+  reference/agent-atlas.md /agent and /agent/claude, local as cache
+hooks/                     hooks.json, session-start.sh, pre-compact.sh
+scripts/infer-atlas.sh     cwd / git remote → atlas slug
 ```
 
-**迷ったら Layer 2**。 Layer 1 は厳しめに gate (MEMORY.md は session start で auto-load → noise 厳禁)。
-
-詳細: [creo-memories/reference/decision-tree.md](creo-memories/reference/decision-tree.md)
-
-## 4-Scene Mental Model
-
-Layer 2 (cloud) の operation は 4 scene で組織化:
+## Install
 
 ```
-┌─────────────────┬──────────────────┐
-│ /memories       │ /atlas           │
-│ data layer      │ structure layer  │
-│ (memory CRUD)   │ (整理 / 共有)    │
-├─────────────────┼──────────────────┤
-│ /views          │ /actions         │
-│ perspective     │ motion layer     │
-│ (compass/story) │ (todo/link/log)  │
-└─────────────────┴──────────────────┘
+/plugin marketplace add chronista-club/chronista-plugins
+/plugin install creo-memories@chronista-plugins
 ```
 
-各 scene の playbook:
-- [/memories](creo-memories/reference/scenes/memories.md) — data
-- [/atlas](creo-memories/reference/scenes/atlas.md) — structure
-- [/views](creo-memories/reference/scenes/views.md) — perspective
-- [/actions](creo-memories/reference/scenes/actions.md) — motion
+Authentication: the MCP server uses OAuth (Creo ID). On first use Claude Code opens the login.
 
-## Quick Start Cookbook
+## Companion
 
-### A. 設計決定を保存
+The plugin mirrors the MCP server's tool list, argument names and atlas names. The mirror is verified by `apps/creo-mcp-server/src/plugin-contract.test.ts` in the (private) `creo-memories` repo (CI job `plugin-contract`, clones this repo's `main`). Changes to tools on the server side come paired with a PR here; PR numbers reference each other. Spec: creo-memories `docs/spec/25-memory-classification.md`, design doc 39.
 
-```
-remember({
-  content: '# {決定内容}\n## 理由\n...',
-  category: 'decision',
-  status: 'done',
-  conceptIds: ['{tag}'],
-  atlasId: '{project}'
-})
-```
+## Changelog
 
-→ Pre-save Detection で類似 memory 提案。 supersede 必要なら同 call の `supersedes:[mem_old]`。
-
-### B. PR / Linear と pair (mandate)
-
-```
-remember({ content, category:'task', status:'in-progress', atlasId })
-+ link_external({ memoryId, externalSystem:'linear', externalId:'CREO-XXX' })
-+ link_external({ memoryId, externalSystem:'github', externalId:'PR-XXX' })
-完了時: complete_with_context({ memoryId, resultSummary, externalUrl })
-```
-
-### C. agent 間 comm を残す
-
-```
-record_work_log({
-  type: 'decision' | 'message' | 'question' | 'progress' | 'review',
-  sender, receiver, content, projectId
-})
-```
-
-### D. Cycle close
-
-```
-get_profile() / project_progress(atlasId)
-generate_compass(atlasId) → snapshot を remember
-detect_processes() → create_process で chain narrative 化
-memory_health() → stale 整理
-```
-
-詳細: [Cookbook 一覧](creo-memories/SKILL.md#5-cookbook-具体的-recipe)
-
-## Features
-
-- **Context Engine v3.0** — session start で過去 memory + 未完 todo 自動提供
-- **Semantic Search** — 意味検索 (Qdrant + embedding)
-- **Atlas + Concept** — 階層 tree + 統合分類 (categories/labels/tags)
-- **Process / Compass / Story** — chain narrative + LLM 自動 summary
-- **Annotation** — thread 型 review (comment/question/concern/suggestion/approval)
-- **Work Log** — agent 間 comm の persist
-- **Subscription** — push 型変更通知
-- **Team / Shared Context** — multi-user 共有
-- **2-Layer + 4-Scene** — mental model で活用駆動 (v0.23 NEW)
-
-## Installation
-
-### From GitHub
-
-```bash
-/install chronista-club/claude-plugin-creo-memories
-```
-
-### Manual Setup
-
-```bash
-claude mcp add --transport http creo-memories https://mcp.creo-memories.in
-```
-
-Or add to `.mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "creo-memories": {
-      "type": "http",
-      "url": "https://mcp.creo-memories.in"
-    }
-  }
-}
-```
-
-## MCP Tools (現状: ~70 tools)
-
-各 scene 別 tool 一覧:
-
-### `/memories` scene (data)
-| Tool | Description |
-|------|-------------|
-| `remember` | Memory 保存 (Pre-save Detection 付き、 supersedes / extends / derives 指定可) |
-| `search` | Semantic + structured search (scope / atlas / concept filter) |
-| `update_memory` | 部分更新 (楽観的 lock 対応) |
-| `forget` | 削除 |
-| `annotate` / `get_annotations` / `reply_annotation` | Thread 型注釈 |
-| `get_provenance` / `get_relations` | 関係 graph (Mermaid) |
-
-### `/atlas` scene (structure)
-| Tool | Description |
-|------|-------------|
-| `create_atlas` / `list_atlas` / `get_atlas_tree` / `update_atlas` / `delete_atlas` | Atlas 操作 |
-| `invite_to_atlas` / `share_atlas` / `unshare_atlas` / `list_shared_atlas` | 招待 / 共有 |
-| `concept_*` (8 tools) | Concept 統合分類 (categories/labels/tags) |
-| `team_*` (4 tools) | Team 管理 |
-
-### `/views` scene (perspective)
-| Tool | Description |
-|------|-------------|
-| `generate_compass` | Atlas 全体の Concept 別 summary |
-| `generate_story` | Atlas narrative 生成 |
-| `create_process` / `get_process` / `detect_processes` | Memory chain を Process 化 |
-| `memory_health` | Stale / broken-link / 偏り検出 |
-| `get_profile` | 自分の活動 profile |
-| `project_progress` | 進捗 report |
-| `system_health` / `diagnose` / `search_logs` | 健全性 / log |
-
-### `/actions` scene (motion)
-| Tool | Description |
-|------|-------------|
-| `create_todo` / `list_todos` / `update_todo` / `complete_todo` / `delete_todo` | Todo |
-| `link_external` / `complete_with_context` / `find_by_external` | External (Linear/GitHub) |
-| `subscribe_memories` / `unsubscribe_memories` / `list_subscriptions` / `check_notifications` | Push 通知 |
-| `record_work_log` / `search_work_logs` | Agent comm trace |
-| `update_presence` / `get_presence` | Presence |
-| `create_shared_context` / `list_shared_contexts` / `get_shared_context` / `add_to_shared_context` / `join_shared_context` / `leave_shared_context` | Shared context |
-| `end_session` | Session 終了 |
-
-詳細: [creo-memories/reference/mcp-tools.md](creo-memories/reference/mcp-tools.md)
-
-### Future API (v0.24+ 予定)
-
-70 tool → 6 core verbs + 5 named conveniences = **11 tools** へリデザイン提案中:
-
-```
-Core: read / write / remove / query / transform / subscribe
-Named: remember / recall / annotate / complete_with_context / record_work_log / end_session
-```
-
-詳細: [creo-memories/reference/api-redesign.md](creo-memories/reference/api-redesign.md)
-
-## Setup / Authentication
-
-1. Plugin install (`/install chronista-club/claude-plugin-creo-memories`)
-2. 初回利用時 OAuth (Auth0) prompt — Google / GitHub login
-3. 以後 auto
-
-API Key (programmatic):
-- `generate_api_key` で発行
-- `Authorization: Bearer <key>` header で使用
-
-## Requirements
-
-- Claude Code
-- Creo Memories account (free tier)
-
-## Links
-
-| | URL |
-|---|-----|
-| MCP Endpoint | `https://mcp.creo-memories.in` |
-| Web Viewer | `https://creo-memories.in` |
-| GitHub | `https://github.com/chronista-club/claude-plugin-creo-memories` |
+See [CHANGELOG.md](CHANGELOG.md). 0.55.0 is the rewrite for the spec-25 world (2026-09-06).
 
 ## License
 
