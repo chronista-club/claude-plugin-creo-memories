@@ -99,7 +99,7 @@ fetch_atlas() {
 }
 
 tmp=$(mktemp)
-trap 'rm -f "$tmp" "$tmp.top" "$tmp.all"; rmdir "$lock" 2>/dev/null' EXIT
+trap 'rm -f "$tmp" "$tmp.top"; rmdir "$lock" 2>/dev/null' EXIT
 ok=1
 for a in ${atlas:+"$atlas"} claude agent; do
   fetch_atlas "$a" >> "$tmp" || { echo "creo-sync: $a の取得に失敗 (前回の写しを残す)"; ok=0; }
@@ -110,36 +110,40 @@ done
 MAX="${CREO_CACHE_MAX:-150}"
 case "$MAX" in ''|*[!0-9]*) MAX=150 ;; esac
 total=$($JQ -s 'length' "$tmp")
-cp "$tmp" "$tmp.all"
-$JQ -s -c --argjson max "$MAX" 'sort_by(.updated_at // .updatedAt // "") | reverse | .[:$max] | .[]' "$tmp" > "$tmp.top" && mv -f "$tmp.top" "$tmp"
+$JQ -s -c 'sort_by(.updated_at // .updatedAt // "") | reverse | .[]' "$tmp" > "$tmp.top" && mv -f "$tmp.top" "$tmp"
 omitted=$((total > MAX ? total - MAX : 0))
 omitted_names=()
-if [ "$omitted" -gt 0 ]; then
-  while IFS= read -r n; do [ -n "$n" ] && omitted_names+=("$n"); done < <(
-    $JQ -s -r --argjson max "$MAX" 'sort_by(.updated_at // .updatedAt // "") | reverse | .[$max:] | .[] | (.metadata.cache.name // (.content | split("\n")[0] | sub("^#+ *"; "")))' "$tmp.all" 2>/dev/null \
-      | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//' | cut -c1-63)
-fi
 
 mkdir -p "$mem_dir"
 index="$mem_dir/MEMORY.md"
 written=()
 count=0
-# 1 記憶 = 1 file。name は metadata.cache.name、無ければ題から slug 化
+seen=()   # 書いた名前と省いた名前の両方 (衝突の判定は 1 つの規則で)
+
+slugify() { tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//' | cut -c1-63; }
+
+# 1 記憶 → file 名。metadata.cache.name → 無ければ題 → それも空なら id。英数字と `-` だけ (creo の metadata は
+# 共有 atlas なら他の書き手の入力。`/` `..` を通さない)。同じ名前が 2 度出たら id の末尾を添える。
+# 書く側と (上限で) 省く側の両方がこの 1 つの関数を通る = index の「local にしか無い」判定が同じ名前で行える
+derive_name() {
+  local line="$1" n
+  n=$(printf '%s' "$line" | $JQ -r '.metadata.cache.name // empty' | slugify)
+  [ -z "$n" ] && n=$(printf '%s' "$line" | $JQ -r '(.content | split("\n")[0]) | sub("^#+ *"; "")' | slugify)
+  [ -z "$n" ] && n=$(printf '%s' "$line" | $JQ -r '.id' | slugify)
+  case " ${seen[*]:-} " in *" $n "*) n="$n-$(printf '%s' "$line" | $JQ -r '.id' | tail -c 7 | slugify)" ;; esac
+  printf '%s' "$n"
+}
+
+i=0
 while IFS= read -r line; do
   [ -z "$line" ] && continue
-  name=$(printf '%s' "$line" | $JQ -r '.metadata.cache.name // empty')
+  name=$(derive_name "$line")
+  seen+=("$name")
+  if [ "$i" -ge "$MAX" ]; then omitted_names+=("$name"); i=$((i + 1)); continue; fi
+  i=$((i + 1))
   title=$(printf '%s' "$line" | $JQ -r '(.content | split("\n")[0]) | sub("^#+ *"; "")')
   # YAML で素のまま置けない題 (": " や " #" や引用符を含む、特殊文字で始まる) は double-quoted (JSON の escape と互換)
   ytitle=$(printf '%s' "$title" | $JQ -R -r 'if test(": | #|[\"\\\\]|^[\\[\\]{}&*!|>%@`'"'"'-?,]|:$") then tojson else . end')
-  if [ -z "$name" ]; then
-    name=$(printf '%s' "$title" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//' | cut -c1-63)
-    [ -z "$name" ] && name=$(printf '%s' "$line" | $JQ -r '.id')
-  fi
-  # file 名に使える形に (creo の metadata は共有 atlas なら他の書き手の入力。`/` `..` `..` を通さない)
-  name=$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//' | cut -c1-63)
-  [ -z "$name" ] && name=$(printf '%s' "$line" | $JQ -r '.id')
-  # 同じ名前が 2 度出たら黙って上書きせず id を添える
-  case " ${written[*]:-} " in *" $name "*) name="$name-$(printf '%s' "$line" | $JQ -r '.id' | tail -c 7)" ;; esac
   # creo 由来でない同名の local file は消さず退避する (消さない、の約束)
   if [ -f "$mem_dir/$name.md" ] && ! grep -q '^  creo_id: ' "$mem_dir/$name.md"; then
     mv -f "$mem_dir/$name.md" "$mem_dir/$name.local-only.md"
