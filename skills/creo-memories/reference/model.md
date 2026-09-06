@@ -20,7 +20,7 @@
 | 考え (9) | `decision` (決めた) / `context` (背景) / `design` (設計) / `learning` (学び) / `spec` (仕様) / `idea` (思いつき) / `guide` (手順) / `plan` (計画) / `story` (物語、生成物) |
 | やること (1) | `todo` |
 
-**未整理 (kind 無し) は一級の状態** (D9)。急ぐ時は kind 無しで速記し、後で `propose({ kind: 'classify' })` か人が付ける。`category` / `tags` は deprecated — `category` は旧 → 新の対応表で `kind` に写される (対応の無い値だけ未整理)、`tags` は `search({ tags })` で旧 `metadata.tags` / `legacy_tags` を OR で見る絞り込みとして効く (deprecated だが、label に写していない古い記憶を引く唯一の手段)。新しく書くなら `kind` と `labelIds`。
+**未整理 (kind 無し) は一級の状態** (D9)。急ぐ時は kind 無しで速記し、後で `propose({ kind: 'classify' })` か人が付ける。`category` / `tags` は deprecated — `category` は旧 → 新の対応表で `kind` に写される (対応の無い値だけ未整理)、`tags` は deprecated だが絞り込みとして効く。旧 tag を全部 (`metadata.tags` と `legacy_tags`、OR) 見るのは **query 無しの `search({ tags })`** — query を付けた semantic 経路は `legacy_tags` を見ない。label に写していない古い記憶を引く手段。新しく書くなら `kind` と `labelIds`。
 
 ## 語彙は label (文法だけ決まっている)
 

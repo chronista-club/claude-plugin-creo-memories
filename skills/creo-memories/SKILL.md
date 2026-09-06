@@ -68,7 +68,7 @@ lock と unlock / review 段の提案の受け入れ。agent は頼む・提案�
 - `annotate` は `targetMemoryId`、`get_annotations` は `memoryId`
 - `create_todo` に title は無い (content の 1 行目)。`priority` は `low | medium | high`
 - `read` の filter は strict (未知 key はエラー)。`resource` は `memory | atlas | todo`
-- `category` / `tags` は deprecated。`category` は対応表で `kind` に写る (対応の無い値は未整理)、`tags` は旧 `metadata.tags` / `legacy_tags` を OR で見る絞り込みとして効く (label に写していない古い記憶を引く手段)。新しく書くなら `kind` と `labelIds`
+- `category` / `tags` は deprecated。`category` は対応表で `kind` に写る (対応の無い値は未整理)、`tags` は deprecated だが絞り込みとして効く (label に写していない古い記憶を引く手段。**query 無しの `search({ tags })`** が旧 tag を全部見る形)。新しく書くなら `kind` と `labelIds`
 - `remember` の `labelIds` に無い label を渡すとエラー (先に `label_create`)。label 名の `/` は atlas 専用で使わない、大小は同じ扱い (`Area:MCP` = `area:mcp`)
 - `update_memory` / `forget` / `supersede` は lock 中に 409。`generate_story` / `generate_compass` の再生成は lock を見ずに上書き
 - `search({ atlasId })` は子 atlas を含まない
