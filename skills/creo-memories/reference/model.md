@@ -20,15 +20,15 @@
 | 考え (9) | `decision` (決めた) / `context` (背景) / `design` (設計) / `learning` (学び) / `spec` (仕様) / `idea` (思いつき) / `guide` (手順) / `plan` (計画) / `story` (物語、生成物) |
 | やること (1) | `todo` |
 
-**未整理 (kind 無し) は一級の状態** (D9)。急ぐ時は kind 無しで速記し、後で `propose({ kind: 'classify' })` か人が付ける。`category` / `tags` は deprecated — `category` は旧 → 新の対応表で `kind` に写される (対応の無い値だけ未整理)、`tags` は metadata に残るだけで絞り込みに使えない。新しく書くなら `kind` と `labelIds`。
+**未整理 (kind 無し) は一級の状態** (D9)。急ぐ時は kind 無しで速記し、後で `propose({ kind: 'classify' })` か人が付ける。`category` / `tags` は deprecated — `category` は旧 → 新の対応表で `kind` に写される (対応の無い値だけ未整理)、`tags` は `search({ tags })` で旧 `metadata.tags` / `legacy_tags` を OR で見る絞り込みとして効く (deprecated だが、label に写していない古い記憶を引く唯一の手段)。新しく書くなら `kind` と `labelIds`。
 
 ## 語彙は label (文法だけ決まっている)
 
 - 自由 tag は無い (D11)。語彙は **種類 + label**
 - label は **ユーザー単位**。**文法は `family:leaf[:leaf]`** — `:` は構造 (左が広く右が狭い、`phase:2:waiting`)、`-` は語の中の連結 (`cross-project`)、`/` は atlas の path 専用で label には使わない、大小は無視 (key は小文字)。決まっているのは記号の使い方だけで、family も葉も自由
-- **agent も作れる** (D19 は 2026-09-06 に改訂。旧「人が作る」は撤回)。作る前に `label_list` で既存を見て、合う family に寄せる。増えた葉は `propose({ kind: 'label_merge' | 'decay' })` で手入れする。plan の上限 (slate 20 / desk 1,000) は server が守る
-- 初回の 28 本 (2026-09-06、旧 tag から): `repo:<git remote の basename>` (5、他 atlas の code base を指す時だけ) / `priority:high|medium|low` / `size:s|m|l` / `phase:1` / `mark:dogfood|roadmap|redesign|cross-project|backlog` (人の印) / `area:architecture|surrealdb|mcp|…` (11)
-- 旧 tag は `metadata.legacy_tags` に残っているだけ (絞り込みには使えない)
+- **agent も作れる** (D19 は 2026-09-06 に改訂。旧「人が作る」は撤回)。作る前に `label_list` で既存を見て、合う family に寄せる。増えた葉は `propose({ kind: 'label_merge' | 'decay' })` で手入れする。**server が見るのは長さ (≤64) と plan の上限 (slate 20 / desk 1,000) だけ**で、文法は弾かない (規約)
+- label は user 単位なので一覧は人ごとに違う (新しい user は 0 件)。family の例: `repo:<git remote の basename>` (他 atlas の code base を指す時だけ) / `priority:high|medium|low` / `size:s|m|l` / `phase:<n>[:<状態>]` / `mark:<人の印>` (dogfood、roadmap、backlog …) / `area:<技術や領域>` (surrealdb、mcp、deploy …)
+- 旧 tag は `metadata.legacy_tags` に残り、`search({ tags })` で引ける
 
 ## 印と属性
 
