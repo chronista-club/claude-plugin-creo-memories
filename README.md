@@ -1,5 +1,7 @@
 # claude-plugin-creo-memories
 
+> **⚠️ この repo は 2026-09-07 に凍結しました。正本は [chronista-club/plugin-creo-memories](https://github.com/chronista-club/plugin-creo-memories) (Claude Code / Codex 共通) で、marketplace `chronista-plugins` もそちらを指します。F-2 (0.56.0、creo → local の写し) は plugin-creo-memories の 0.57.0 に移植済み。**
+
 Claude Code plugin for **creo-memories** — the external brain. Your context is finite and the session ends; creo is where the continuation lives, shared with the next you, the other agents working alongside (codex / grok / other LLMs / another claude session), and the people you work with.
 
 ## What it gives Claude
