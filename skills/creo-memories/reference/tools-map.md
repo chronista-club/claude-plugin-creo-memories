@@ -43,17 +43,16 @@ tool の説明文と引数は **MCP server の定義が SSOT** (`apps/creo-mcp-s
 |---|---|
 | `supersede_memory` | 古い記憶を新しい記憶で置き換えたと印を付ける (消さない) |
 | `forget` | 本当に要らない時だけ (lock 中は不可)。迷えば archive や supersede |
-| `label_list` / `label_attach` / `label_detach` | 人が作った label から選んで付け外し。無い label は作れない (頼む) |
-| `propose` | 分類 / label の新設や統合 / 蒸留 / 矛盾 / 減衰 / 重複 / 剪定の提案。判断は人 (review 段) |
-| `proposal_list` / `proposal_revert` | 提案の一覧 / 受け入れた提案を戻す |
+| `label_list` / `label_create` / `label_attach` / `label_detach` | 先に `label_list` で既存を見る。合うものが無ければ文法 (`family:leaf`) の中で `label_create({ name })`。plan の上限は server が守る |
+| `propose` | 分類 / label の統合 / 蒸留 / 矛盾 / 減衰 / 重複 / 剪定の提案。判断は人 (review 段)。report 段 (decay / duplicate) は agent 同士でも閉じる |
+| `proposal_list` / `proposal_reject` / `proposal_revert` | 提案の一覧 / 却下 / 受け入れた提案を戻す。report 段 (decay / duplicate) の受け入れは agent もできる |
 
 ## 人だけができること (agent は頼む)
 
 | tool | 意味 |
 |---|---|
-| `label_create` | label を作る (D19)。agent が呼ぶと拒否 |
 | `lock_memory` / `unlock_memory` / `label_lock` / `label_unlock` | lock = 消えない・隠れない・本文と状態が変わらない (D21)。移動 / label / 関係 / 再生成は通る |
-| `proposal_accept` / `proposal_reject` | review 段の受け入れ・却下。agent の自己承認は拒否 |
+| `proposal_accept` (review 段) | review 段 (classify / label_create / label_merge / distill / contradiction / prune) の受け入れ。agent の自己承認は server が拒否 |
 
 ## 場所 (atlas) と共有
 

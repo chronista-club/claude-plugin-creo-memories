@@ -8,7 +8,7 @@
 2. 続きなら `read({ resource: 'todo' })` で未完を確認し、直前の handoff を `search({ query: 'handoff', kind: 'handoff', atlasId })`
 3. 自分の癖が関係しそうなら `search({ query, atlasId: 'claude' })` と `search({ query, atlasId: 'agent' })`
 
-## 2. 引き継ぐ (handoff) — context が半分を超えたら、終える前に
+## 2. 引き継ぐ (handoff) — context が尽きる前に (節目 / compaction の前 / 終える前)
 
 ```
 remember({
@@ -52,5 +52,5 @@ complete_todo({ id })
 
 - 相手が拾う前提で書く: 題 / 結論 / 次の一手。相手の名前は本文に (sender は server が付ける)
 - 引き継ぎは todo (相手の atlas か project atlas) + annotation。wire / chat は通知だけ
-- 人に頼むこと (label を作る / lock / 提案の受け入れ) は todo か annotation で**頼む**。代わりにやろうとしない (server が拒否する)
+- 人に頼むこと (lock / review 段の提案の受け入れ) は todo か annotation で**頼む**。代わりにやろうとしない (server が拒否する)
 - 会話の記録が要るなら `record_work_log({ content, workLogType: 'decision', sender, receiver })`

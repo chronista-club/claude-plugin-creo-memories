@@ -31,7 +31,7 @@ if top=$(git rev-parse --show-toplevel 2>/dev/null); then
   # worktree の dir 名は branch 名になりがち → remote の repo 名を優先
   if remote=$(git remote get-url origin 2>/dev/null); then
     r=$(basename "${remote%.git}")
-    [ -n "$r" ] && name="$r"
+    if [ -n "$r" ]; then name="$r"; fi
   fi
 fi
 [ -z "$name" ] && name=$(basename "$REPO_PATH")

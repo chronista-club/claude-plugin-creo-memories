@@ -18,13 +18,13 @@ tags:
 
 - **書く**のは「次に拾う誰かのため」。決めた / 学んだ / 壊れた / 渡す / 後で自分が探す、のどれかなら書く。会話の写しは書かない
 - **読む**のは「自分が始めた気になる前」。session 開始の「今日の脳」は自動で入る。過去の決定を前提にする前に `search`
-- 機械的な規則 (lock、行為者、提案の門、種類の列挙、label は人だけ) は **server が守る**。ここに「必ず」は無い。判断はあなたがする
+- 機械的な規則 (lock、行為者、提案の門、種類の列挙、label の文法と上限) は **server が守る**。ここに「必ず」は無い。判断はあなたがする
 
 ## B. 世界の形 (詳細: [model.md](reference/model.md))
 
 - 記憶は **出来事 / 考え / やること** の 3 系統。終わり方で決まる (出来事は終わらない、考えは置き換わる、やることは片付く)。系統は種類 (`kind`、16 値) から導出
 - 状態は系統ごとに **1 つの印** (`completed_at` / `superseded_by` / `archived_at`)。`status` 列は無い
-- 語彙は **種類 + label**。自由 tag は無い。label は**人が作る**、agent は付けるか提案する
+- 語彙は **種類 + label**。自由 tag は無い。label は `family:leaf[:leaf]` の文法 (`:` は左が広く右が狭い、`-` は語の連結、`/` は atlas 専用、大小無視) で **agent も人も作れる**。語彙は自由。増えた分は減衰と統合の提案で手入れする
 - **未整理 (kind 無し) は一級の状態**。急ぐ時は kind 無しで速記してよい。後で `propose` か人が付ける
 - **lock** = 消えない・隠れない・本文と状態が変わらない。移動 / label / 関係 / 再生成は通る。lock も unlock も人だけ
 - **誰が書いたか (`sender`) は server が決める**。名乗らなくてよい。あなたが書いた記憶は `agents:claude` として人にも他 agent にも見える
@@ -34,7 +34,7 @@ tags:
 
 ### 書く
 - `remember({ content, kind, atlasId })`。1 行目は題。結論が先。id や生 SQL や長い log は本文に貼らない (人が web / iOS で読む)
-- **context が半分を超えたら handoff を 1 本** (`kind: 'handoff'`): 次の一手 / 止まっている理由 / 見ている file / 決めたこと。compaction の前の hook が思い出させる
+- **context が尽きる前に handoff を 1 本** (`kind: 'handoff'`): 次の一手 / 止まっている理由 / 見ている file / 決めたこと。きっかけは場面で違う — 長い作業の節目、compaction の前 (hook が思い出させる)、終える前。「まだ書いていない」と気づいた時が書く時
 - 既存の記憶に足すなら `annotate({ targetMemoryId, content })`。本文を書き換えるのは自分が書いた記憶の訂正だけ
 - 古い理解を新しい理解で置き換えたら `remember({ content, supersedes: ['mem_…'] })` か `supersede_memory({ id, supersededBy })`。消さない
 
@@ -50,11 +50,11 @@ tags:
 
 ### 整える (提案する)
 - 種類が違う / label を足したい / 2 つが同じ / 矛盾している → `propose({ kind, target, change, reason })`。判断は人
-- label は `label_list()` から選んで `label_attach({ memoryId, labelIds })`。無い label は**頼む** (`label_create` は人だけ)
+- label は先に `label_list()` で既存を見て、合うものを `label_attach({ memoryId, labelIds })`。無ければ文法の中で `label_create({ name })` (既存の family に寄せる。`repo:` / `priority:` / `size:` / `phase:` / `mark:` / `area:` が初回にある)。似た label が並んだら `propose({ kind: 'label_merge' })`
 - 要らない記憶は `forget` より archive や supersede。lock 中は 409 — unlock は人に頼む
 
 ### 人だけができること
-label を作る / lock と unlock / review 段の提案の受け入れ。agent は頼む・提案する。
+lock と unlock / review 段の提案の受け入れ。agent は頼む・提案する。
 
 ## D. 他者と
 
@@ -68,8 +68,8 @@ label を作る / lock と unlock / review 段の提案の受け入れ。agent �
 - `annotate` は `targetMemoryId`、`get_annotations` は `memoryId`
 - `create_todo` に title は無い (content の 1 行目)。`priority` は `low | medium | high`
 - `read` の filter は strict (未知 key はエラー)。`resource` は `memory | atlas | todo`
-- `category` / `tags` は deprecated。渡しても黙って未整理に入る。`kind` と `labelIds` を使う
-- `remember` の `labelIds` に無い label を渡すとエラー (作れるのは人だけ)
+- `category` / `tags` は deprecated。`category` は対応表で `kind` に写る (対応の無い値は未整理)、`tags` は絞り込みに効かない。新しく書くなら `kind` と `labelIds`
+- `remember` の `labelIds` に無い label を渡すとエラー (先に `label_create`)。label 名の `/` は atlas 専用で使わない、大小は同じ扱い (`Area:MCP` = `area:mcp`)
 - `update_memory` / `forget` / `supersede` は lock 中に 409。`generate_story` / `generate_compass` の再生成は lock を見ずに上書き
 - `search({ atlasId })` は子 atlas を含まない
 

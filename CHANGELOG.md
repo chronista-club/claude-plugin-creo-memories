@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.55.0] - 2026-09-06
 
 ### Changed — 賢いモデルのための全面書き直し (spec 25 の世界に)
-- **8,063 行 → 約 600 行**。plugin が渡すのは「事実 (creo の世界の形) と目的と判断の基準」だけ。機械的な規則 (lock / 行為者 / 提案の門 / 種類の列挙 / label は人だけ) は server が守るので「必ず」「mandate」を全部落とした
+- **8,063 行 → 約 600 行**。plugin が渡すのは「事実 (creo の世界の形) と目的と判断の基準」だけ。機械的な規則 (lock / 行為者 / 提案の門 / 種類の列挙 / label の文法と上限) は server が守るので「必ず」「mandate」を全部落とした
+- **label は agent も作れる** (spec 25 D19 の改訂、2026-09-06): 文法 `family:leaf[:leaf]` (`:` 構造 / `-` 連結 / `/` は atlas 専用 / 大小無視) だけ決め、語彙は自由。`label_list` を先に見る、増えた分は減衰と統合の提案で手入れ。初回の 28 本 (repo / priority / size / phase / mark / area) は creo 側で旧 tag から投入済
 - SKILL.md を A 目的 / B 世界の形 / C 判断の基準 / D 他者と / E 罠 の 5 節 (≤ 120 行) に。reference は `model.md` (spec 25 の要約) / `tools-map.md` (意図 → tool、75 tool、creo の CI が検証) / `recipes.md` (6 場面) / `agent-atlas.md` の 4 本
 - 2-layer「Layer 1 = Local Canon」を spec 25 D8 / D28 の言葉に: **正本は creo、local は写し** (creo → local の生成は次版)
 - hooks を 4 つに: SessionStart (atlas の手がかり、server は cwd を知らない) / **PreCompact (新、context が縮む前に handoff を促す)** / Stop (1 行) / PreToolUse(Write memory/*.md) (D8 の言葉に)
